@@ -1656,6 +1656,19 @@ function buildAnalisis(){
   var sb={responsive:true,maintainAspectRatio:true,
     plugins:{legend:{position:'bottom',labels:{color:'var(--muted)',font:{family:'IBM Plex Sans',size:10},padding:6,boxWidth:8,usePointStyle:true}}}};
 
+  // Actualizar subtítulos de los gráficos con el año seleccionado
+  (function(){
+    var el;
+    el=document.getElementById('chScatter1');
+    if(el){el=el.closest('.cc').querySelector('.cs');if(el) el.textContent='superficie construida · densidad media · '+aYr;}
+    el=document.getElementById('chScatter2');
+    if(el){el=el.closest('.cc').querySelector('.cs');if(el) el.textContent=(aYr===1980?'comparación vs 1980 · seleccioná otro año para ver diferencias':'variación % respecto a 1980 · 1980 → '+aYr);}
+    el=document.getElementById('chDenEvol');
+    if(el){el=el.closest('.cc').querySelector('.cs');if(el) el.textContent='1980 – '+aYr+' · curva descendente = expansión extensiva';}
+    el=document.getElementById('chScatter3');
+    if(el){el=el.closest('.cc').querySelector('.cs');if(el) el.textContent=(aYr===1980?'comparación vs 1980 · seleccioná otro año para ver diferencias':'crecimiento de núcleos vs. crecimiento de píxeles 1980→'+aYr);}
+  })();
+
   killChart('sc1');
   var g1=makeGroups(function(l){var d=DATA.localities[l].data[aYr];return(d&&d.pix&&d.den)?{x:d.pix,y:d.den}:null;});
   charts['sc1']=new Chart(document.getElementById('chScatter1').getContext('2d'),{
@@ -1695,9 +1708,10 @@ function buildAnalisis(){
   });
 
   killChart('denEvol');
+  var denYears=YEARS.filter(function(y){return y<=aYr;});
   charts['denEvol']=new Chart(document.getElementById('chDenEvol').getContext('2d'),{
-    type:'line',data:{labels:YEARS,datasets:Object.keys(DATA.regions).map(function(rn){
-      return{label:rn,data:YEARS.map(function(y){return DATA.regions[rn]&&DATA.regions[rn][y]?DATA.regions[rn][y].den:null;}),
+    type:'line',data:{labels:denYears,datasets:Object.keys(DATA.regions).map(function(rn){
+      return{label:rn,data:denYears.map(function(y){return DATA.regions[rn]&&DATA.regions[rn][y]?DATA.regions[rn][y].den:null;}),
         borderColor:getCol(rn),backgroundColor:'transparent',tension:.35,pointRadius:4,pointBackgroundColor:getCol(rn),borderWidth:2,fill:false};
     })},
     options:Object.assign({},sb,{plugins:Object.assign({},sb.plugins,{tooltip:{callbacks:{label:function(i){return' '+i.dataset.label+': '+fmt(i.raw,1)+' hab/km²';}}}}),
@@ -1732,6 +1746,14 @@ function buildAnalisis(){
   });
   // Actualizar scatter animado con el año actual de análisis
   if(document.getElementById('chAnimScatter')) buildAnimScatter(aYr);
+  // Sincronizar slider de animación con el año de corte
+  var yrIdx=YEARS_ARR.indexOf(aYr);
+  if(yrIdx>=0){
+    var sl=document.getElementById('animSlider'),yl=document.getElementById('animYrLabel');
+    if(sl) sl.value=yrIdx;
+    if(yl) yl.textContent=aYr;
+    animYrIdx=yrIdx;
+  }
 }
 
 function initAnalisis(){
