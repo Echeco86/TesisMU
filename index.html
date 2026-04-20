@@ -1485,8 +1485,10 @@ function renderTbl(){
         '<td style="font-size:11px;color:'+(gpx&&parseFloat(gpx)>=0?'#1a7a1a':'#7a1a1a')+';font-weight:700">'+(gpx?(parseFloat(gpx)>=0?'+':'')+gpx+'%':'—')+'</td>'+
         '<td style="font-size:10px;font-weight:700;color:'+(p?p.color:'#888')+'">'+(p?p.label:'—')+'</td>'+
         '<td onclick="event.stopPropagation()" style="text-align:center">'+
-          '<button onclick="downloadMapGeoJSON('+tblYr+')" '+
-          'title="Descargar capa GeoJSON '+tblYr+'" '+
+          '<button onclick="downloadMapPDF(\''+r.name.replace(/'/g,"\\'")+'\',' +
+            '\''+r.region_nombre.replace(/'/g,"\\'")+'\''+
+            ',this)" '+
+          'title="Descargar mapa PDF · '+r.region_nombre+'_'+r.name+'" '+
           'style="display:inline-flex;align-items:center;gap:3px;color:var(--muted);font-size:9px;background:none;border:1px solid var(--border);border-radius:4px;padding:3px 7px;cursor:pointer;font-family:Space Mono,monospace;transition:all .2s" '+
           'onmouseover="this.style.borderColor=\'var(--text)\';this.style.color=\'var(--text)\'" '+
           'onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--muted)\'"'+
@@ -2091,20 +2093,47 @@ window.addEventListener('DOMContentLoaded',()=>{
   initScrollyObserver();
 });
 
-// ══ MAP DOWNLOAD ══
-function downloadMapGeoJSON(yr){
-  var url = 'https://raw.githubusercontent.com/Echeco86/TesisMU/main/'+yr+'_Ligth.geojson';
-  fetch(url)
-    .then(function(r){ return r.blob(); })
-    .then(function(blob){
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = yr + '_Ligth.geojson';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+// ══ MAP DOWNLOAD FROM DRIVE ══
+var DRIVE_FOLDER = '1GSGLTnf-798G4vggjE7BbhgAr6PVCVEN';
+var DRIVE_API_KEY = '';  // ← Colocar aquí la clave de API de Google Drive
+
+function downloadMapPDF(localidad, region, btnEl){
+  var filename = region + '_' + localidad + '.pdf';
+
+  if(!DRIVE_API_KEY){
+    // Sin clave API: abre la carpeta en Drive como fallback
+    window.open('https://drive.google.com/drive/folders/'+DRIVE_FOLDER,'_blank');
+    return;
+  }
+
+  if(btnEl){ btnEl.textContent='⏳'; btnEl.disabled=true; }
+
+  var q = encodeURIComponent("name='"+filename+"' and '"+DRIVE_FOLDER+"' in parents and trashed=false");
+  var apiUrl = 'https://www.googleapis.com/drive/v3/files?q='+q
+             + '&fields=files(id,name)&key='+DRIVE_API_KEY;
+
+  fetch(apiUrl)
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(btnEl){ btnEl.textContent='↓ mapa'; btnEl.disabled=false; }
+      if(data.files && data.files.length>0){
+        var fileId = data.files[0].id;
+        var a = document.createElement('a');
+        a.href = 'https://drive.google.com/uc?export=download&id='+fileId;
+        a.target = '_blank';
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        // Archivo no encontrado: abre la carpeta
+        window.open('https://drive.google.com/drive/folders/'+DRIVE_FOLDER,'_blank');
+      }
     })
-    .catch(function(){ window.open(url,'_blank'); });
+    .catch(function(){
+      if(btnEl){ btnEl.textContent='↓ mapa'; btnEl.disabled=false; }
+      window.open('https://drive.google.com/drive/folders/'+DRIVE_FOLDER,'_blank');
+    });
 }
 
 // ══ SPLASH ══
