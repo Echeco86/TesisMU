@@ -237,23 +237,23 @@ footer a:hover{color:var(--text)}
 #splash{position:fixed;inset:0;z-index:9999;background:#0f0f0d;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .7s ease;overflow-y:auto;padding:48px 24px}
 #splash.fade-out{opacity:0;pointer-events:none}
 .sp-inner{max-width:680px;width:100%;display:flex;flex-direction:column;gap:26px}
-.sp-eye{font-family:'Space Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.22em;color:#2e2e26}
+.sp-eye{font-family:'Space Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.22em;color:#9a9a8a}
 .sp-title{font-family:'Fraunces',serif;font-size:clamp(40px,7vw,80px);font-weight:900;line-height:1.02;color:#f5f3ee}
-.sp-sub{font-family:'Space Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#3a3a32;margin-top:-14px}
+.sp-sub{font-family:'Space Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#9a9a8a;margin-top:-14px}
 .sp-bar{width:48px;height:2px;background:#28c924}
 .sp-stats{display:flex;gap:40px;flex-wrap:wrap}
 .sp-stat .sv{font-family:'Fraunces',serif;font-size:56px;font-weight:900;color:#f5f3ee;line-height:1;display:block}
-.sp-stat .sl{font-family:'Space Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#3a3a32;margin-top:5px}
-.sp-abs{font-family:'Inter',sans-serif;font-size:13px;line-height:1.9;color:#555548;max-width:600px;border-left:2px solid #28c924;padding-left:16px}
+.sp-stat .sl{font-family:'Space Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#9a9a8a;margin-top:5px}
+.sp-abs{font-family:'Inter',sans-serif;font-size:13px;line-height:1.9;color:#c5c5b8;max-width:600px;border-left:2px solid #28c924;padding-left:16px}
 .sp-btn{display:inline-flex;align-items:center;gap:10px;background:#f5f3ee;color:#0f0f0d;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;padding:14px 26px;border:none;border-radius:3px;cursor:pointer;transition:all .2s;align-self:flex-start}
 .sp-btn:hover{background:#fff;transform:translateX(6px)}
-.sp-foot{font-family:'Space Mono',monospace;font-size:9px;color:#28282060;text-transform:uppercase;letter-spacing:.1em}
+.sp-foot{font-family:'Space Mono',monospace;font-size:9px;color:#9a9a8a;text-transform:uppercase;letter-spacing:.1em}
 
 /* ── CV MODAL ── */
 #cvModal{position:fixed;inset:0;z-index:8000;background:rgba(15,15,13,.78);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px}
 .cv-card{background:var(--card);border:1px solid var(--border);border-radius:10px;max-width:400px;width:100%;padding:28px;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.22)}
 .cv-x{position:absolute;top:13px;right:14px;background:none;border:none;cursor:pointer;font-size:17px;color:var(--muted);line-height:1;font-family:'Space Mono',monospace}
-.cv-photo{width:130px;height:130px;border-radius:50%;object-fit:cover;object-position:50% 12%;border:2px solid var(--border);margin:0 auto 18px;display:block}
+.cv-photo{width:200px;height:200px;border-radius:10px;object-fit:cover;object-position:50% 12%;border:2px solid var(--border);margin:0 auto 18px;display:block}
 .cv-name{font-family:'Fraunces',serif;font-size:18px;font-weight:900;margin-bottom:3px;text-align:center}
 .cv-rolelbl{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:16px;text-align:center}
 .cv-hr{border:none;border-top:1px solid var(--border);margin:14px 0}
@@ -330,7 +330,7 @@ footer a:hover{color:var(--text)}
     </div>
     <p class="sp-abs">Este trabajo analiza la expansión urbana de los municipios y comunas de la provincia de Córdoba entre 1980–2022, articulando el cambio físico del tejido construido con la dinámica demográfica. Los resultados distinguen localidades con tendencia dispersiva, densificante y trayectorias mixtas según su inserción regional. El aporte central es un enfoque replicable de medición y clasificación territorial útil para diagnóstico, monitoreo y planificación.</p>
     <button class="sp-btn" onclick="closeSplash()">Explorar datos &nbsp;→</button>
-    <div class="sp-foot">Mgtr. Lic. Juan Manuel Echecolanea &nbsp;·&nbsp; <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e3a6808b86808c8f828d86828996828da3848e828a8fcd808c8e">[email&#160;protected]</a></div>
+    <div class="sp-foot">Mgtr. Lic. Juan Manuel Echecolanea &nbsp;·&nbsp; echecolaneajuan@gmail.com</div>
   </div>
 </div>
 
@@ -346,7 +346,7 @@ footer a:hover{color:var(--text)}
     <div class="cv-row"><span class="cl">Tesis</span><span class="cv">Transformaciones Territoriales · 2024</span></div>
     <div class="cv-row"><span class="cl">Área</span><span class="cv">Análisis espacial, SIG, urbanismo cuantitativo</span></div>
     <div class="cv-row"><span class="cl">Datos</span><span class="cv">GHSL · INDEC · QGIS · Python</span></div>
-    <div class="cv-row"><span class="cl">Email</span><span class="cv"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="0b4e68636e6864676a656e6a617e6a654b6c666a626725686466">[email&#160;protected]</a></span></div>
+    <div class="cv-row"><span class="cl">Email</span><span class="cv"><a href="mailto:echecolaneajuan@gmail.com" class="cv-link">echecolaneajuan@gmail.com</a></span></div>
     <hr class="cv-hr">
     <a href="https://www.linkedin.com/in/juan-manuel-echecolanea-b23a5566/" target="_blank" class="cv-link">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
@@ -1485,12 +1485,12 @@ function renderTbl(){
         '<td style="font-size:11px;color:'+(gpx&&parseFloat(gpx)>=0?'#1a7a1a':'#7a1a1a')+';font-weight:700">'+(gpx?(parseFloat(gpx)>=0?'+':'')+gpx+'%':'—')+'</td>'+
         '<td style="font-size:10px;font-weight:700;color:'+(p?p.color:'#888')+'">'+(p?p.label:'—')+'</td>'+
         '<td onclick="event.stopPropagation()" style="text-align:center">'+
-          '<a href="'+getDriveUrl(r.name,r.region_nombre)+'" target="_blank" '+
-          'title="Archivo: '+'" '+
-          'style="display:inline-flex;align-items:center;gap:3px;color:var(--muted);font-size:9px;text-decoration:none;border:1px solid var(--border);border-radius:4px;padding:3px 7px;transition:all .2s" '+
+          '<button onclick="downloadMapGeoJSON('+tblYr+')" '+
+          'title="Descargar capa GeoJSON '+tblYr+'" '+
+          'style="display:inline-flex;align-items:center;gap:3px;color:var(--muted);font-size:9px;background:none;border:1px solid var(--border);border-radius:4px;padding:3px 7px;cursor:pointer;font-family:Space Mono,monospace;transition:all .2s" '+
           'onmouseover="this.style.borderColor=\'var(--text)\';this.style.color=\'var(--text)\'" '+
           'onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--muted)\'"'+
-          '>↓ mapa</a></td>';
+          '>↓ mapa</button></td>';
       tb.appendChild(tr);
     });
   }
@@ -2091,12 +2091,20 @@ window.addEventListener('DOMContentLoaded',()=>{
   initScrollyObserver();
 });
 
-// ══ DRIVE MAP LINKS ══
-var DRIVE_FOLDER = '1GSGLTnf-798G4vggjE7BbhgAr6PVCVEN';
-function getDriveUrl(localidad, region){
-  var filename = region + '_' + localidad;
-  // Search within the shared folder for the file by name
-  return 'https://drive.google.com/drive/folders/' + DRIVE_FOLDER + '?q=' + encodeURIComponent(filename);
+// ══ MAP DOWNLOAD ══
+function downloadMapGeoJSON(yr){
+  var url = 'https://raw.githubusercontent.com/Echeco86/TesisMU/main/'+yr+'_Ligth.geojson';
+  fetch(url)
+    .then(function(r){ return r.blob(); })
+    .then(function(blob){
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = yr + '_Ligth.geojson';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    })
+    .catch(function(){ window.open(url,'_blank'); });
 }
 
 // ══ SPLASH ══
