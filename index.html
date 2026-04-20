@@ -341,7 +341,7 @@ footer a:hover{color:var(--text)}
   <div class="cv-card">
     <button class="cv-x" onclick="closeCV()">✕</button>
     <div class="cv-photo-wrap">
-      <img src="uploads/foto-1776705581349.jpg" class="cv-photo" alt="Juan Manuel Echecolanea"
+      <img src="foto-1776705581349.jpg" class="cv-photo" alt="Juan Manuel Echecolanea"
            onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
       <div class="cv-photo-init">JME</div>
     </div>
@@ -2364,8 +2364,11 @@ async function render3DMap(){
         data:MUNICIPIOS_GJ,
         stroked:true,
         filled:false,
-        getLineColor:[255,255,255,180],
-        lineWidthMinPixels:2
+        getLineColor:[255,255,255,255],
+        lineWidthUnits:'pixels',
+        getLineWidth:3,
+        lineWidthMinPixels:3,
+        parameters:{depthTest:false}
       })
     ],
     getTooltip:function(o){
