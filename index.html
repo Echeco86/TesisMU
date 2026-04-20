@@ -253,7 +253,9 @@ footer a:hover{color:var(--text)}
 #cvModal{position:fixed;inset:0;z-index:8000;background:rgba(15,15,13,.78);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px}
 .cv-card{background:var(--card);border:1px solid var(--border);border-radius:10px;max-width:400px;width:100%;padding:28px;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.22)}
 .cv-x{position:absolute;top:13px;right:14px;background:none;border:none;cursor:pointer;font-size:17px;color:var(--muted);line-height:1;font-family:'Space Mono',monospace}
-.cv-photo{width:200px;height:200px;border-radius:10px;object-fit:cover;object-position:50% 12%;border:2px solid var(--border);margin:0 auto 18px;display:block}
+.cv-photo-wrap{width:200px;height:200px;margin:0 auto 18px;display:block;border-radius:10px;overflow:hidden;border:2px solid var(--border);flex-shrink:0}
+.cv-photo{width:200px;height:200px;object-fit:cover;object-position:50% 12%;display:block}
+.cv-photo-init{width:200px;height:200px;background:var(--surface);display:none;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:52px;font-weight:900;color:var(--muted);letter-spacing:-.02em}
 .cv-name{font-family:'Fraunces',serif;font-size:18px;font-weight:900;margin-bottom:3px;text-align:center}
 .cv-rolelbl{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:16px;text-align:center}
 .cv-hr{border:none;border-top:1px solid var(--border);margin:14px 0}
@@ -338,16 +340,24 @@ footer a:hover{color:var(--text)}
 <div id="cvModal" onclick="if(event.target===this)closeCV()">
   <div class="cv-card">
     <button class="cv-x" onclick="closeCV()">✕</button>
-    <img src="uploads/foto-1776705581349.jpg" class="cv-photo" alt="Juan Manuel Echecolanea">
+    <div class="cv-photo-wrap">
+      <img src="uploads/foto-1776705581349.jpg" class="cv-photo" alt="Juan Manuel Echecolanea"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="cv-photo-init">JME</div>
+    </div>
     <div class="cv-name">Juan Manuel Echecolanea</div>
     <div class="cv-rolelbl">Mgtr. Lic. · Urbanismo / Geografía</div>
     <hr class="cv-hr">
     <div class="cv-row"><span class="cl">Posgrado</span><span class="cv">Maestría en Urbanismo · UNC</span></div>
-    <div class="cv-row"><span class="cl">Tesis</span><span class="cv">Transformaciones Territoriales · 2024</span></div>
+    <div class="cv-row"><span class="cl">Tesis</span><span class="cv" style="line-height:1.5">Transformaciones territoriales: dinámicas poblacionales y urbanas en municipios y comunas de la provincia de Córdoba (1980–2022)</span></div>
     <div class="cv-row"><span class="cl">Área</span><span class="cv">Análisis espacial, SIG, urbanismo cuantitativo</span></div>
     <div class="cv-row"><span class="cl">Datos</span><span class="cv">GHSL · INDEC · QGIS · Python</span></div>
     <div class="cv-row"><span class="cl">Email</span><span class="cv"><a href="mailto:echecolaneajuan@gmail.com" class="cv-link">echecolaneajuan@gmail.com</a></span></div>
     <hr class="cv-hr">
+    <a href="http://hdl.handle.net/11086/560262" target="_blank" class="cv-link" style="margin-bottom:10px;display:inline-flex">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      Repositorio institucional UNC
+    </a>
     <a href="https://www.linkedin.com/in/juan-manuel-echecolanea-b23a5566/" target="_blank" class="cv-link">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
       LinkedIn · Juan Manuel Echecolanea
@@ -2095,45 +2105,74 @@ window.addEventListener('DOMContentLoaded',()=>{
 
 // ══ MAP DOWNLOAD FROM DRIVE ══
 var DRIVE_FOLDER = '1GSGLTnf-798G4vggjE7BbhgAr6PVCVEN';
-var DRIVE_API_KEY = 'AIzaSyD2L8VGh1CbXJLj3ab6IpyyJpBiDIbl3nk';  // ← Colocar aquí la clave de API de Google Drive
+var DRIVE_API_KEY = 'AIzaSyD2L8VGh1CbXJLj3ab6IpyyJpBiDIbl3nk';
+var _driveFilesCache = null;
+
+// Normaliza un string para comparación: minúsculas, sin tildes, sin caracteres especiales
+function _normStr(s){
+  return (s||'').toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^a-z0-9\s]/g,' ')
+    .replace(/\s+/g,' ').trim();
+}
+
+// Lista todos los PDFs de la carpeta Drive y los cachea (una sola llamada API)
+function _loadDriveFiles(cb){
+  if(_driveFilesCache){ cb(_driveFilesCache); return; }
+  if(!DRIVE_API_KEY){ cb([]); return; }
+  var q = encodeURIComponent("'"+DRIVE_FOLDER+"' in parents and trashed=false and mimeType='application/pdf'");
+  fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id,name)&pageSize=1000&key='+DRIVE_API_KEY)
+    .then(function(r){ return r.json(); })
+    .then(function(d){ _driveFilesCache = d.files||[]; cb(_driveFilesCache); })
+    .catch(function(){ cb([]); });
+}
 
 function downloadMapPDF(localidad, region, btnEl){
-  var filename = region + '_' + localidad + '.pdf';
-
   if(!DRIVE_API_KEY){
-    // Sin clave API: abre la carpeta en Drive como fallback
     window.open('https://drive.google.com/drive/folders/'+DRIVE_FOLDER,'_blank');
     return;
   }
-
   if(btnEl){ btnEl.textContent='⏳'; btnEl.disabled=true; }
 
-  var q = encodeURIComponent("name='"+filename+"' and '"+DRIVE_FOLDER+"' in parents and trashed=false");
-  var apiUrl = 'https://www.googleapis.com/drive/v3/files?q='+q
-             + '&fields=files(id,name)&key='+DRIVE_API_KEY;
-
-  fetch(apiUrl)
-    .then(function(r){ return r.json(); })
-    .then(function(data){
-      if(btnEl){ btnEl.textContent='↓ mapa'; btnEl.disabled=false; }
-      if(data.files && data.files.length>0){
-        var fileId = data.files[0].id;
-        var a = document.createElement('a');
-        a.href = 'https://drive.google.com/uc?export=download&id='+fileId;
-        a.target = '_blank';
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } else {
-        // Archivo no encontrado: abre la carpeta
-        window.open('https://drive.google.com/drive/folders/'+DRIVE_FOLDER,'_blank');
-      }
-    })
-    .catch(function(){
-      if(btnEl){ btnEl.textContent='↓ mapa'; btnEl.disabled=false; }
+  _loadDriveFiles(function(files){
+    if(btnEl){ btnEl.textContent='↓ mapa'; btnEl.disabled=false; }
+    if(!files.length){
       window.open('https://drive.google.com/drive/folders/'+DRIVE_FOLDER,'_blank');
-    });
+      return;
+    }
+
+    var nReg = _normStr(region);
+    var nLoc = _normStr(localidad);
+
+    // 1) Intenta match exacto: nombre_normalizado == region_localidad
+    var match = null;
+    for(var i=0;i<files.length;i++){
+      var base = _normStr(files[i].name.replace(/\.pdf$/i,''));
+      var sep  = base.indexOf('_');
+      if(sep<0) continue;
+      var fReg = base.slice(0,sep).trim();
+      var fLoc = base.slice(sep+1).trim();
+      if(fReg===nReg && fLoc===nLoc){ match=files[i]; break; }
+    }
+
+    // 2) Fallback: el nombre del archivo contiene la localidad normalizada
+    if(!match){
+      for(var i=0;i<files.length;i++){
+        var base = _normStr(files[i].name);
+        if(base.indexOf(nLoc)!==-1){ match=files[i]; break; }
+      }
+    }
+
+    if(match){
+      var a=document.createElement('a');
+      a.href='https://drive.google.com/uc?export=download&id='+match.id;
+      a.target='_blank';
+      a.download=match.name;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    } else {
+      window.open('https://drive.google.com/drive/folders/'+DRIVE_FOLDER,'_blank');
+    }
+  });
 }
 
 // ══ SPLASH ══
