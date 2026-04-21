@@ -2145,15 +2145,36 @@ function downloadMapPDF(localidad, region, btnEl){
     var nLoc = _normStr(localidad);
 
     // 1) Intenta match exacto: nombre_normalizado == region_localidad
-    var match = null;
-    for(var i=0;i<files.length;i++){
-      var base = _normStr(files[i].name.replace(/\.pdf$/i,''));
-      var sep  = base.indexOf('_');
-      if(sep<0) continue;
-      var fReg = base.slice(0,sep).trim();
-      var fLoc = base.slice(sep+1).trim();
-      if(fReg===nReg && fLoc===nLoc){ match=files[i]; break; }
+// 1) Primero intenta match exacto (Región + Localidad)
+var match = null;
+for(var i=0; i<files.length; i++){
+  var base = _normStr(files[i].name.replace(/\.pdf$/i,''));
+  var sep  = base.indexOf('_');
+  if(sep < 0) continue;
+  
+  var fReg = base.slice(0, sep).trim();
+  var fLoc = base.slice(sep + 1).trim();
+  
+  if(fReg === nReg && fLoc === nLoc){ 
+    match = files[i]; 
+    break; 
+  }
+}
+
+// 2) SI NO ENCONTRÓ: Busca solo por la Localidad (la segunda parte del nombre)
+if(!match){
+  for(var i=0; i<files.length; i++){
+    var base = _normStr(files[i].name.replace(/\.pdf$/i,''));
+    var sep  = base.indexOf('_');
+    if(sep < 0) continue;
+    
+    var fLoc = base.slice(sep + 1).trim(); // Extrae solo la localidad
+    if(fLoc === nLoc){ 
+      match = files[i]; 
+      break; 
     }
+  }
+}
 
     // 2) Fallback: el nombre del archivo contiene la localidad normalizada
     if(!match){
