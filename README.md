@@ -47,7 +47,7 @@ Para cada una de las 427 localidades y en cinco cortes temporales (1980, 1990, 2
 La provincia se organiza en **9 regiones** de análisis:
 
 1. Área Metropolitana de Córdoba
-2. Sierras Centrales
+2. Ciudades con mas de cincuenta mil habitantes
 3. Valles Turísticos
 4. Región Norte
 5. Región Oeste
@@ -68,8 +68,6 @@ La provincia se organiza en **9 regiones** de análisis:
 | Frontend | HTML5 + CSS3 + JavaScript (vanilla) |
 | Tipografías | Space Mono, Fraunces, Inter |
 | Hosting | GitHub Pages |
-
-El dashboard es un **archivo HTML autocontenido** sin dependencias de backend ni servidor. Funciona completamente offline una vez descargado.
 
 ---
 
