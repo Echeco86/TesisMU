@@ -254,52 +254,40 @@ footer a:hover{color:var(--text)}
 
 /* ── SPLASH ── */
 #splash{
-  position:fixed;inset:0;z-index:9999;
-  background:var(--bg);
-  display:grid;grid-template-columns:1fr 1fr;
-  transition:opacity .7s ease;
-  overflow:hidden;
+  position:fixed;inset:0;z-index:9999;background:var(--bg);
+  display:grid;grid-template-columns:5fr 6fr;
+  transition:opacity .7s ease;overflow:hidden;
 }
 #splash.fade-out{opacity:0;pointer-events:none}
 
-/* Columna izquierda — contenido principal */
+/* Columna izquierda */
 .sp-left{
   display:flex;flex-direction:column;justify-content:space-between;
-  padding:48px 52px;border-right:1px solid var(--border);
-  overflow-y:auto;
+  padding:52px 56px;border-right:1px solid var(--border);overflow-y:auto;
 }
-.sp-left-top{display:flex;flex-direction:column;gap:28px}
+.sp-left-top{display:flex;flex-direction:column;gap:32px}
 
 .sp-eye{
   font-family:'Space Mono',monospace;font-size:9px;text-transform:uppercase;
-  letter-spacing:.22em;color:var(--muted);
-}
-.sp-title-block{display:flex;flex-direction:column;gap:10px}
-.sp-tag{
-  font-family:'Space Mono',monospace;font-size:8px;text-transform:uppercase;
-  letter-spacing:.18em;color:#28c924;font-weight:700;
+  letter-spacing:.2em;color:var(--muted);
 }
 .sp-title{
-  font-family:'Fraunces',serif;
-  font-size:clamp(36px,4.5vw,64px);
-  font-weight:900;line-height:1.05;color:var(--text);
-  margin:0;
+  font-family:'Fraunces',serif;font-size:clamp(38px,4vw,58px);
+  font-weight:900;line-height:1.05;color:var(--text);margin:0 0 16px;
 }
 .sp-sub{
-  font-family:'Space Mono',monospace;font-size:11px;
-  text-transform:uppercase;letter-spacing:.12em;
-  color:var(--muted);margin:0;
+  font-family:'Inter',sans-serif;font-size:clamp(14px,1.4vw,18px);
+  font-weight:400;line-height:1.55;color:var(--text);margin:0;
+  border-left:3px solid #28c924;padding-left:16px;
 }
 .sp-abs{
   font-family:'Inter',sans-serif;font-size:13px;line-height:1.85;
-  color:var(--muted);border-left:3px solid #28c924;padding-left:16px;
-  margin:0;
+  color:var(--muted);margin:0;
 }
 .sp-btn{
   display:inline-flex;align-items:center;gap:10px;
-  background:var(--text);color:#fff;
-  font-family:'Space Mono',monospace;font-size:10px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.12em;
+  background:var(--text);color:#fff;font-family:'Space Mono',monospace;
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;
   padding:14px 28px;border:none;border-radius:4px;
   cursor:pointer;transition:opacity .2s;align-self:flex-start;
 }
@@ -307,49 +295,20 @@ footer a:hover{color:var(--text)}
 .sp-foot{
   font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);
   text-transform:uppercase;letter-spacing:.08em;
-  border-top:1px solid var(--border);padding-top:20px;margin-top:20px;
+  border-top:1px solid var(--border);padding-top:18px;
 }
 .sp-foot a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--border)}
 .sp-foot a:hover{color:var(--text)}
 
-/* Columna derecha — estadísticas */
-.sp-right{
-  display:flex;flex-direction:column;background:var(--card);
-  overflow-y:auto;
-}
-.sp-right-top{
-  flex:1;display:flex;flex-direction:column;justify-content:center;
-  padding:48px 44px;gap:0;
-}
-.sp-stat{
-  padding:28px 0;border-bottom:1px solid var(--border);
-}
-.sp-stat:first-child{border-top:1px solid var(--border)}
-.sp-stat .sv{
-  font-family:'Fraunces',serif;font-size:clamp(48px,5vw,72px);
-  font-weight:900;line-height:1;color:var(--text);display:block;
-  letter-spacing:-.02em;
-}
-.sp-stat .sl{
-  font-family:'Space Mono',monospace;font-size:10px;text-transform:uppercase;
-  letter-spacing:.1em;color:var(--muted);margin-top:6px;display:block;
-}
-.sp-right-map{
-  border-top:3px solid var(--border);background:var(--surface);
-  padding:20px 44px;display:flex;flex-direction:column;gap:6px;
-}
-.sp-map-label{
-  font-family:'Space Mono',monospace;font-size:8px;text-transform:uppercase;
-  letter-spacing:.16em;color:var(--muted);
-}
-.sp-years{display:flex;gap:8px;flex-wrap:wrap}
-.sp-yr{
-  font-family:'Fraunces',serif;font-size:13px;font-weight:900;
-  padding:4px 11px;border-radius:20px;border:1.5px solid;
+/* Columna derecha — imagen */
+.sp-right{position:relative;overflow:hidden;background:#fff}
+.sp-right img{
+  width:100%;height:100%;
+  object-fit:cover;object-position:center 20%;
+  display:block;
 }
 
-/* Responsive: una columna en pantallas pequeñas */
-@media(max-width:700px){
+@media(max-width:720px){
   #splash{grid-template-columns:1fr}
   .sp-right{display:none}
   .sp-left{padding:36px 28px}
@@ -431,18 +390,17 @@ select:focus-visible,input:focus-visible{border-color:var(--text);outline:2px so
 <!-- SPLASH -->
 <div id="splash" role="dialog" aria-modal="true" aria-label="Presentación del proyecto">
 
-  <!-- Columna izquierda: título y descripción -->
+  <!-- Columna izquierda -->
   <div class="sp-left">
     <div class="sp-left-top">
       <div class="sp-eye">Maestría en Urbanismo · Universidad Nacional de Córdoba</div>
 
-      <div class="sp-title-block">
-        <span class="sp-tag">Tesis de posgrado · 2024</span>
+      <div>
         <h1 class="sp-title">Transformaciones<br>Territoriales</h1>
-        <p class="sp-sub">Dinámicas poblacionales y urbanas<br>Provincia de Córdoba · 1980–2022</p>
+        <p class="sp-sub">Dinámicas poblacionales y urbanas en municipios y comunas de la provincia de Córdoba · 1980–2022</p>
       </div>
 
-      <p class="sp-abs">Este trabajo analiza la expansión urbana de los municipios y comunas de la provincia de Córdoba entre 1980 y 2022, articulando el cambio físico del tejido construido con la dinámica demográfica. Los resultados distinguen localidades con tendencia dispersiva, densificante y trayectorias mixtas según su inserción regional.</p>
+      <p class="sp-abs">Este trabajo analiza la expansión urbana de 427 municipios y comunas, articulando el cambio físico del tejido construido con la dinámica demográfica. Los resultados distinguen localidades con tendencia dispersiva, densificante y trayectorias mixtas según su inserción regional.</p>
 
       <button class="sp-btn" onclick="closeSplash()">Explorar datos &nbsp;→</button>
     </div>
@@ -455,33 +413,10 @@ select:focus-visible,input:focus-visible{border-color:var(--text);outline:2px so
     </div>
   </div>
 
-  <!-- Columna derecha: estadísticas -->
+  <!-- Columna derecha: imagen -->
   <div class="sp-right">
-    <div class="sp-right-top">
-      <div class="sp-stat">
-        <span class="sv" id="s-stat1">427</span>
-        <span class="sl">Municipios y comunas analizados</span>
-      </div>
-      <div class="sp-stat">
-        <span class="sv" id="s-stat2">+155%</span>
-        <span class="sl">Expansión urbana total (1980–2020)</span>
-      </div>
-      <div class="sp-stat">
-        <span class="sv" id="s-stat3">9</span>
-        <span class="sl">Regiones de la provincia</span>
-      </div>
-    </div>
-
-    <div class="sp-right-map">
-      <span class="sp-map-label">Años relevados</span>
-      <div class="sp-years">
-        <span class="sp-yr" style="border-color:#28c924;color:#155c00;background:#edfced">1980</span>
-        <span class="sp-yr" style="border-color:#1ec3e6;color:#0a5f70;background:#e8f9fd">1990</span>
-        <span class="sp-yr" style="border-color:#854bfa;color:#4a1a9a;background:#f3edff">2000</span>
-        <span class="sp-yr" style="border-color:#e33943;color:#8a1a20;background:#fef0f0">2010</span>
-        <span class="sp-yr" style="border-color:#faa523;color:#7a4a00;background:#fff5e6">2020</span>
-      </div>
-    </div>
+    <img src="splash-bg.jpg"
+         alt="Huellas urbanas de municipios y comunas de la provincia de Córdoba (GHSL 2020)">
   </div>
 
 </div>
@@ -2369,13 +2304,6 @@ function initSplash(){
   if(localStorage.getItem('splashSeen')==='1'){
     var sp=document.getElementById('splash');
     if(sp) sp.style.display='none';
-  } else {
-    // Anima los números al cargar
-    setTimeout(function(){
-      animCount('s-stat1',427,'',0);
-      animCount('s-stat2',155,'+%',0);
-      animCount('s-stat3',9,'',0);
-    },500);
   }
 }
 function closeSplash(){
