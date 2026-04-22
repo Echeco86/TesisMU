@@ -291,8 +291,24 @@ footer a:hover{color:var(--text)}
   padding:14px 28px;border:none;border-radius:4px;
   cursor:pointer;transition:opacity .2s;align-self:flex-start;
 }
-.sp-btn:hover{opacity:.8}
-.sp-foot{
+.sp-stats{
+  display:flex;gap:0;border-top:1px solid var(--border);
+}
+.sp-stat{
+  flex:1;padding:18px 0 0;
+  border-right:1px solid var(--border);
+  padding-right:20px;margin-right:20px;
+}
+.sp-stat:last-child{border-right:none;padding-right:0;margin-right:0}
+.sp-stat .sv{
+  font-family:'Fraunces',serif;font-size:clamp(30px,3vw,42px);
+  font-weight:900;line-height:1;color:var(--text);
+  display:block;letter-spacing:-.02em;
+}
+.sp-stat .sl{
+  font-family:'Space Mono',monospace;font-size:9px;text-transform:uppercase;
+  letter-spacing:.1em;color:var(--muted);margin-top:5px;display:block;
+}
   font-family:'Space Mono',monospace;font-size:9px;color:var(--muted);
   text-transform:uppercase;letter-spacing:.08em;
   border-top:1px solid var(--border);padding-top:18px;
@@ -403,6 +419,21 @@ select:focus-visible,input:focus-visible{border-color:var(--text);outline:2px so
       <p class="sp-abs">Este trabajo analiza la expansión urbana de 427 municipios y comunas, articulando el cambio físico del tejido construido con la dinámica demográfica. Los resultados distinguen localidades con tendencia dispersiva, densificante y trayectorias mixtas según su inserción regional.</p>
 
       <button class="sp-btn" onclick="closeSplash()">Explorar datos &nbsp;→</button>
+
+      <div class="sp-stats">
+        <div class="sp-stat">
+          <span class="sv">427</span>
+          <span class="sl">Localidades</span>
+        </div>
+        <div class="sp-stat">
+          <span class="sv">+155%</span>
+          <span class="sl">Expansión urbana</span>
+        </div>
+        <div class="sp-stat">
+          <span class="sv">9</span>
+          <span class="sl">Regiones</span>
+        </div>
+      </div>
     </div>
 
     <div class="sp-foot">
