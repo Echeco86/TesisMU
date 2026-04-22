@@ -1,0 +1,11 @@
+# Vector tiles generados por build-tiles.sh (no van al repo; generarlos localmente o en CI)
+tiles/
+cordoba_urbana.mbtiles
+
+# Archivos temporales del sistema
+.DS_Store
+Thumbs.db
+
+# Entornos locales
+.env
+.env.local
