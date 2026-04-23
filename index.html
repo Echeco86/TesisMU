@@ -1063,6 +1063,8 @@ const FGB_CAT_LABELS = ['Muy Baja','Baja','Media','Alta','Muy Alta'];
 
 var layerOpacity = {1980:0.85, 1990:0.85, 2000:0.85, 2010:0.85, 2020:0.85};
 var layerActive  = {1980:false, 1990:false, 2000:false, 2010:false, 2020:false};
+var _mapLoaded   = false;
+var _pendingYrs  = [];
 
 // Compute bounding box [[minLng,minLat],[maxLng,maxLat]] from a GeoJSON feature
 function featureBBox(feat){
@@ -1108,12 +1110,39 @@ function updateDensLegend(){
   if(items) items.innerHTML=html;
 }
 
-function initMap(){
-  // Resolve tile base URL (works on localhost, GitHub Pages and Vercel)
-  var loc=window.location;
-  var dir=loc.pathname.endsWith('/')?loc.pathname:loc.pathname.substring(0,loc.pathname.lastIndexOf('/')+1);
-  var tileBase=loc.protocol+'//'+loc.host+dir;
+// Load a year's GeoJSON and add it as a MapLibre fill layer (lazy, cached).
+// Inserts the layer below the municipality outlines so interaction layers stay on top.
+async function _ensureYearLayer(yr){
+  if(!_mapLoaded){_pendingYrs.push(yr);return;}
+  var layerId='density-fill-'+yr;
+  if(map.getLayer(layerId)){
+    map.setLayoutProperty(layerId,'visibility','visible');
+    return;
+  }
+  var loadMsg=document.getElementById('mapLoadMsg');
+  var loadTxt=document.getElementById('mapLoadText');
+  if(loadMsg){if(loadTxt) loadTxt.textContent='Cargando capa '+yr+'...';loadMsg.style.display='block';}
+  try{
+    var resp=await fetch(yr+'_Ligth.geojson');
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    var gj=await resp.json();
+    map.addSource('year-'+yr,{type:'geojson',data:gj});
+    map.addLayer({
+      id:layerId,
+      type:'fill',
+      source:'year-'+yr,
+      paint:{'fill-color':_densColorExpr(yr),'fill-opacity':layerOpacity[yr]}
+    },'muni-outline'); // insert below municipality layers
+    if(loadMsg) loadMsg.style.display='none';
+  }catch(e){
+    if(loadMsg){if(loadTxt) loadTxt.textContent='Error '+yr+': '+e.message;setTimeout(function(){if(loadMsg)loadMsg.style.display='none';},3000);}
+    layerActive[yr]=false;
+    var btn=document.getElementById('yrb-'+yr);
+    if(btn) btn.classList.add('off');
+  }
+}
 
+function initMap(){
   map=new maplibregl.Map({
     container:'map',
     style:{
@@ -1130,16 +1159,7 @@ function initMap(){
           tileSize:256,
           attribution:'&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         },
-        'tiles':{
-          type:'vector',
-          tiles:[tileBase+'tiles/{z}/{x}/{y}.pbf'],
-          minzoom:5,
-          maxzoom:14
-        },
-        'municipios':{
-          type:'geojson',
-          data:MUNICIPIOS_GJ
-        }
+        'municipios':{type:'geojson',data:MUNICIPIOS_GJ}
       },
       layers:[
         {id:'carto-base',type:'raster',source:'carto',paint:{'raster-opacity':0.6}}
@@ -1153,17 +1173,7 @@ function initMap(){
   map.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-left');
 
   map.on('load',function(){
-    // Density fill layers (one per year, from vector tiles)
-    [1980,1990,2000,2010,2020].forEach(function(yr){
-      map.addLayer({
-        id:'density-fill-'+yr,
-        type:'fill',
-        source:'tiles',
-        'source-layer':'year_'+yr,
-        paint:{'fill-color':_densColorExpr(yr),'fill-opacity':layerOpacity[yr]},
-        layout:{visibility:'none'}
-      });
-    });
+    _mapLoaded=true;
 
     // Municipality outline (always visible, from inline GeoJSON)
     map.addLayer({
@@ -1219,6 +1229,10 @@ function initMap(){
       }
     });
 
+    // Process any years toggled before load completed
+    var pending=_pendingYrs.splice(0);
+    pending.forEach(function(yr){_ensureYearLayer(yr);});
+
     map.fitBounds([[-65.769,-34.858],[-61.788,-29.512]],{padding:10});
     renderMunList('');
     setTimeout(function(){toggleMapYr(2020);},100);
@@ -1234,8 +1248,8 @@ function toggleMapYr(yr){
     if(btn){btn.classList.add('off');btn.style.background='transparent';}
   } else {
     layerActive[yr]=true;
-    if(map && map.getLayer('density-fill-'+yr)) map.setLayoutProperty('density-fill-'+yr,'visibility','visible');
     if(btn){btn.classList.remove('off');btn.style.background=bgs[yr]||'transparent';}
+    if(map) _ensureYearLayer(yr); // fetch GeoJSON + add layer on first use, show if cached
     if(typeof is3D!=='undefined' && is3D){tlCurYr=yr;render3DMap();}
   }
   updateDensLegend();
