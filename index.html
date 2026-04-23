@@ -1063,6 +1063,8 @@ const FGB_CAT_LABELS = ['Muy Baja','Baja','Media','Alta','Muy Alta'];
 
 var layerOpacity = {1980:0.85, 1990:0.85, 2000:0.85, 2010:0.85, 2020:0.85};
 var layerActive  = {1980:false, 1990:false, 2000:false, 2010:false, 2020:false};
+var _mapLoaded   = false;
+var _pendingYrs  = [];
 
 // Compute bounding box [[minLng,minLat],[maxLng,maxLat]] from a GeoJSON feature
 function featureBBox(feat){
@@ -1108,12 +1110,40 @@ function updateDensLegend(){
   if(items) items.innerHTML=html;
 }
 
-function initMap(){
-  // Resolve tile base URL (works on localhost, GitHub Pages and Vercel)
-  var loc=window.location;
-  var dir=loc.pathname.endsWith('/')?loc.pathname:loc.pathname.substring(0,loc.pathname.lastIndexOf('/')+1);
-  var tileBase=loc.protocol+'//'+loc.host+dir;
+// Carga el GeoJSON de un año y lo agrega como capa de fill en MapLibre.
+// En activaciones siguientes, solo muestra la capa ya cargada (cacheado).
+async function _ensureYearLayer(yr){
+  if(!_mapLoaded){_pendingYrs.push(yr);return;}
+  var layerId='density-fill-'+yr;
+  if(map.getLayer(layerId)){
+    map.setLayoutProperty(layerId,'visibility','visible');
+    return;
+  }
+  var loadMsg=document.getElementById('mapLoadMsg');
+  var loadTxt=document.getElementById('mapLoadText');
+  if(loadMsg){if(loadTxt)loadTxt.textContent='Cargando capa '+yr+'...';loadMsg.style.display='block';}
+  try{
+    var resp=await fetch(yr+'_Ligth.geojson');
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    var gj=await resp.json();
+    map.addSource('year-'+yr,{type:'geojson',data:gj});
+    // Insertar antes de los límites municipales para que queden debajo
+    map.addLayer({
+      id:layerId,
+      type:'fill',
+      source:'year-'+yr,
+      paint:{'fill-color':_densColorExpr(yr),'fill-opacity':layerOpacity[yr]}
+    },'muni-outline');
+    if(loadMsg)loadMsg.style.display='none';
+  }catch(e){
+    if(loadMsg){if(loadTxt)loadTxt.textContent='Error '+yr+': '+e.message;setTimeout(function(){if(loadMsg)loadMsg.style.display='none';},3000);}
+    layerActive[yr]=false;
+    var btn=document.getElementById('yrb-'+yr);
+    if(btn)btn.classList.add('off');
+  }
+}
 
+function initMap(){
   map=new maplibregl.Map({
     container:'map',
     style:{
@@ -1130,16 +1160,7 @@ function initMap(){
           tileSize:256,
           attribution:'&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         },
-        'tiles':{
-          type:'vector',
-          tiles:[tileBase+'tiles/{z}/{x}/{y}.pbf'],
-          minzoom:5,
-          maxzoom:14
-        },
-        'municipios':{
-          type:'geojson',
-          data:MUNICIPIOS_GJ
-        }
+        'municipios':{type:'geojson',data:MUNICIPIOS_GJ}
       },
       layers:[
         {id:'carto-base',type:'raster',source:'carto',paint:{'raster-opacity':0.6}}
@@ -1153,57 +1174,22 @@ function initMap(){
   map.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-left');
 
   map.on('load',function(){
-    // Density fill layers (one per year, from vector tiles)
-    [1980,1990,2000,2010,2020].forEach(function(yr){
-      map.addLayer({
-        id:'density-fill-'+yr,
-        type:'fill',
-        source:'tiles',
-        'source-layer':'year_'+yr,
-        paint:{'fill-color':_densColorExpr(yr),'fill-opacity':layerOpacity[yr]},
-        layout:{visibility:'none'}
-      });
-    });
+    _mapLoaded=true;
 
-    // Municipality outline (always visible, from inline GeoJSON)
-    map.addLayer({
-      id:'muni-outline',
-      type:'line',
-      source:'municipios',
-      paint:{'line-color':'#333','line-width':0.8,'line-opacity':0.35}
-    });
+    // Límites municipales (siempre visibles, desde GeoJSON inline)
+    map.addLayer({id:'muni-outline',type:'line',source:'municipios',paint:{'line-color':'#333','line-width':0.8,'line-opacity':0.35}});
+    // Fill invisible solo para capturar eventos de puntero
+    map.addLayer({id:'muni-interact',type:'fill',source:'municipios',paint:{'fill-color':'#000','fill-opacity':0}});
+    // Resaltado hover
+    map.addLayer({id:'muni-hover',type:'fill',source:'municipios',paint:{'fill-color':'#333','fill-opacity':0.07},filter:['==','NOMBRE','']});
+    // Resaltado selección
+    map.addLayer({id:'muni-selected',type:'fill',source:'municipios',paint:{'fill-color':'#1a1a1a','fill-opacity':0.15},filter:['==','NOMBRE','']});
 
-    // Invisible fill used solely for pointer events
-    map.addLayer({
-      id:'muni-interact',
-      type:'fill',
-      source:'municipios',
-      paint:{'fill-color':'#000','fill-opacity':0}
-    });
-
-    // Hover highlight
-    map.addLayer({
-      id:'muni-hover',
-      type:'fill',
-      source:'municipios',
-      paint:{'fill-color':'#333','fill-opacity':0.07},
-      filter:['==','NOMBRE','']
-    });
-
-    // Selected municipality highlight
-    map.addLayer({
-      id:'muni-selected',
-      type:'fill',
-      source:'municipios',
-      paint:{'fill-color':'#1a1a1a','fill-opacity':0.15},
-      filter:['==','NOMBRE','']
-    });
-
-    // Hover handlers
+    // Handlers de hover y click
     map.on('mousemove','muni-interact',function(e){
       if(e.features.length>0){
         var n=e.features[0].properties.NOMBRE;
-        if(n!==selectedMun) map.setFilter('muni-hover',['==','NOMBRE',n]);
+        if(n!==selectedMun)map.setFilter('muni-hover',['==','NOMBRE',n]);
         map.getCanvas().style.cursor='pointer';
       }
     });
@@ -1211,13 +1197,13 @@ function initMap(){
       map.setFilter('muni-hover',['==','NOMBRE','']);
       map.getCanvas().style.cursor='';
     });
-
-    // Click → select municipality
     map.on('click','muni-interact',function(e){
-      if(e.features.length>0){
-        selectMun(e.features[0].properties.NOMBRE, e.features[0]);
-      }
+      if(e.features.length>0)selectMun(e.features[0].properties.NOMBRE,e.features[0]);
     });
+
+    // Procesar años que llegaron antes del evento load
+    var pending=_pendingYrs.splice(0);
+    pending.forEach(function(yr){_ensureYearLayer(yr);});
 
     map.fitBounds([[-65.769,-34.858],[-61.788,-29.512]],{padding:10});
     renderMunList('');
@@ -1230,13 +1216,13 @@ function toggleMapYr(yr){
   var bgs={1980:'#edfced',1990:'#e8f9fd',2000:'#f3edff',2010:'#fef0f0',2020:'#fff5e6'};
   if(layerActive[yr]){
     layerActive[yr]=false;
-    if(map && map.getLayer('density-fill-'+yr)) map.setLayoutProperty('density-fill-'+yr,'visibility','none');
+    if(map&&map.getLayer('density-fill-'+yr))map.setLayoutProperty('density-fill-'+yr,'visibility','none');
     if(btn){btn.classList.add('off');btn.style.background='transparent';}
-  } else {
+  }else{
     layerActive[yr]=true;
-    if(map && map.getLayer('density-fill-'+yr)) map.setLayoutProperty('density-fill-'+yr,'visibility','visible');
     if(btn){btn.classList.remove('off');btn.style.background=bgs[yr]||'transparent';}
-    if(typeof is3D!=='undefined' && is3D){tlCurYr=yr;render3DMap();}
+    if(map)_ensureYearLayer(yr);
+    if(typeof is3D!=='undefined'&&is3D){tlCurYr=yr;render3DMap();}
   }
   updateDensLegend();
 }
