@@ -2512,8 +2512,27 @@ async function render3DMap(){
     canvas:dc,
     initialViewState:{longitude:-64.2,latitude:-31.4,zoom:6.5,pitch:52,bearing:-18},
     controller:true,
-    style:{background:'#0f0f0d'},
+    style:{background:'#f5f3ee'},
     layers:[
+      // Base cartográfica CartoDB light (misma que el mapa 2D)
+      new deck.TileLayer({
+        id:'basemap-3d',
+        data:[
+          'https://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
+          'https://b.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
+          'https://c.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
+          'https://d.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png'
+        ],
+        tileSize:256,
+        renderSubLayers:function(props){
+          var bb=props.tile.boundingBox;
+          return new deck.BitmapLayer(props,{
+            data:null,
+            image:props.data,
+            bounds:[bb[0][0],bb[0][1],bb[1][0],bb[1][1]]
+          });
+        }
+      }),
       new deck.GeoJsonLayer({
         id:'ghsl3d-'+yr,
         data:loaded3D[yr],
@@ -2540,11 +2559,11 @@ async function render3DMap(){
           var rgb=DENS_COLORS[idx!==undefined?idx:2];
           return [rgb[0],rgb[1],rgb[2],220];
         },
-        getLineColor:[255,255,255,10],
+        getLineColor:[80,80,80,15],
         lineWidthMinPixels:0,
         pickable:true,
         autoHighlight:true,
-        highlightColor:[255,255,255,60]
+        highlightColor:[0,0,0,40]
       }),
       // Municipality outlines overlay
       new deck.GeoJsonLayer({
@@ -2552,7 +2571,7 @@ async function render3DMap(){
         data:MUNICIPIOS_GJ,
         stroked:true,
         filled:false,
-        getLineColor:[255,255,255,100],
+        getLineColor:[60,60,60,140],
         lineWidthUnits:'pixels',
         getLineWidth:1,
         lineWidthMinPixels:1,
