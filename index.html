@@ -1110,8 +1110,8 @@ function updateDensLegend(){
   if(items) items.innerHTML=html;
 }
 
-// Load a year's GeoJSON and add it as a MapLibre fill layer (lazy, cached).
-// Inserts the layer below the municipality outlines so interaction layers stay on top.
+// Carga el GeoJSON de un año y lo agrega como capa de fill en MapLibre.
+// En activaciones siguientes, solo muestra la capa ya cargada (cacheado).
 async function _ensureYearLayer(yr){
   if(!_mapLoaded){_pendingYrs.push(yr);return;}
   var layerId='density-fill-'+yr;
@@ -1121,7 +1121,7 @@ async function _ensureYearLayer(yr){
   }
   var loadMsg=document.getElementById('mapLoadMsg');
   var loadTxt=document.getElementById('mapLoadText');
-  if(loadMsg){if(loadTxt) loadTxt.textContent='Cargando capa '+yr+'...';loadMsg.style.display='block';}
+  if(loadMsg){if(loadTxt)loadTxt.textContent='Cargando capa '+yr+'...';loadMsg.style.display='block';}
   try{
     var resp=await fetch(yr+'_Ligth.geojson');
     if(!resp.ok) throw new Error('HTTP '+resp.status);
@@ -1132,13 +1132,13 @@ async function _ensureYearLayer(yr){
       type:'fill',
       source:'year-'+yr,
       paint:{'fill-color':_densColorExpr(yr),'fill-opacity':layerOpacity[yr]}
-    },'muni-outline'); // insert below municipality layers
-    if(loadMsg) loadMsg.style.display='none';
+    },'muni-outline');
+    if(loadMsg)loadMsg.style.display='none';
   }catch(e){
-    if(loadMsg){if(loadTxt) loadTxt.textContent='Error '+yr+': '+e.message;setTimeout(function(){if(loadMsg)loadMsg.style.display='none';},3000);}
+    if(loadMsg){if(loadTxt)loadTxt.textContent='Error '+yr+': '+e.message;setTimeout(function(){if(loadMsg)loadMsg.style.display='none';},3000);}
     layerActive[yr]=false;
     var btn=document.getElementById('yrb-'+yr);
-    if(btn) btn.classList.add('off');
+    if(btn)btn.classList.add('off');
   }
 }
 
@@ -1175,45 +1175,20 @@ function initMap(){
   map.on('load',function(){
     _mapLoaded=true;
 
-    // Municipality outline (always visible, from inline GeoJSON)
-    map.addLayer({
-      id:'muni-outline',
-      type:'line',
-      source:'municipios',
-      paint:{'line-color':'#333','line-width':0.8,'line-opacity':0.35}
-    });
+    // Límites municipales (siempre visibles, desde GeoJSON inline)
+    map.addLayer({id:'muni-outline',type:'line',source:'municipios',paint:{'line-color':'#333','line-width':0.8,'line-opacity':0.35}});
+    // Fill invisible solo para capturar eventos de puntero
+    map.addLayer({id:'muni-interact',type:'fill',source:'municipios',paint:{'fill-color':'#000','fill-opacity':0}});
+    // Resaltado hover
+    map.addLayer({id:'muni-hover',type:'fill',source:'municipios',paint:{'fill-color':'#333','fill-opacity':0.07},filter:['==','NOMBRE','']});
+    // Resaltado selección
+    map.addLayer({id:'muni-selected',type:'fill',source:'municipios',paint:{'fill-color':'#1a1a1a','fill-opacity':0.15},filter:['==','NOMBRE','']});
 
-    // Invisible fill used solely for pointer events
-    map.addLayer({
-      id:'muni-interact',
-      type:'fill',
-      source:'municipios',
-      paint:{'fill-color':'#000','fill-opacity':0}
-    });
-
-    // Hover highlight
-    map.addLayer({
-      id:'muni-hover',
-      type:'fill',
-      source:'municipios',
-      paint:{'fill-color':'#333','fill-opacity':0.07},
-      filter:['==','NOMBRE','']
-    });
-
-    // Selected municipality highlight
-    map.addLayer({
-      id:'muni-selected',
-      type:'fill',
-      source:'municipios',
-      paint:{'fill-color':'#1a1a1a','fill-opacity':0.15},
-      filter:['==','NOMBRE','']
-    });
-
-    // Hover handlers
+    // Handlers de hover y click
     map.on('mousemove','muni-interact',function(e){
       if(e.features.length>0){
         var n=e.features[0].properties.NOMBRE;
-        if(n!==selectedMun) map.setFilter('muni-hover',['==','NOMBRE',n]);
+        if(n!==selectedMun)map.setFilter('muni-hover',['==','NOMBRE',n]);
         map.getCanvas().style.cursor='pointer';
       }
     });
@@ -1221,15 +1196,11 @@ function initMap(){
       map.setFilter('muni-hover',['==','NOMBRE','']);
       map.getCanvas().style.cursor='';
     });
-
-    // Click → select municipality
     map.on('click','muni-interact',function(e){
-      if(e.features.length>0){
-        selectMun(e.features[0].properties.NOMBRE, e.features[0]);
-      }
+      if(e.features.length>0)selectMun(e.features[0].properties.NOMBRE,e.features[0]);
     });
 
-    // Process any years toggled before load completed
+    // Procesar años que llegaron antes del evento load
     var pending=_pendingYrs.splice(0);
     pending.forEach(function(yr){_ensureYearLayer(yr);});
 
@@ -1244,13 +1215,13 @@ function toggleMapYr(yr){
   var bgs={1980:'#edfced',1990:'#e8f9fd',2000:'#f3edff',2010:'#fef0f0',2020:'#fff5e6'};
   if(layerActive[yr]){
     layerActive[yr]=false;
-    if(map && map.getLayer('density-fill-'+yr)) map.setLayoutProperty('density-fill-'+yr,'visibility','none');
+    if(map&&map.getLayer('density-fill-'+yr))map.setLayoutProperty('density-fill-'+yr,'visibility','none');
     if(btn){btn.classList.add('off');btn.style.background='transparent';}
-  } else {
+  }else{
     layerActive[yr]=true;
     if(btn){btn.classList.remove('off');btn.style.background=bgs[yr]||'transparent';}
-    if(map) _ensureYearLayer(yr); // fetch GeoJSON + add layer on first use, show if cached
-    if(typeof is3D!=='undefined' && is3D){tlCurYr=yr;render3DMap();}
+    if(map)_ensureYearLayer(yr);
+    if(typeof is3D!=='undefined'&&is3D){tlCurYr=yr;render3DMap();}
   }
   updateDensLegend();
 }
@@ -2540,8 +2511,27 @@ async function render3DMap(){
     canvas:dc,
     initialViewState:{longitude:-64.2,latitude:-31.4,zoom:6.5,pitch:52,bearing:-18},
     controller:true,
-    style:{background:'#0f0f0d'},
+    style:{background:'#f5f3ee'},
     layers:[
+      // Base cartográfica CartoDB light (misma que el mapa 2D)
+      new deck.TileLayer({
+        id:'basemap-3d',
+        data:[
+          'https://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
+          'https://b.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
+          'https://c.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
+          'https://d.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png'
+        ],
+        tileSize:256,
+        renderSubLayers:function(props){
+          var bb=props.tile.boundingBox;
+          return new deck.BitmapLayer(props,{
+            data:null,
+            image:props.data,
+            bounds:[bb[0][0],bb[0][1],bb[1][0],bb[1][1]]
+          });
+        }
+      }),
       new deck.GeoJsonLayer({
         id:'ghsl3d-'+yr,
         data:loaded3D[yr],
@@ -2568,11 +2558,11 @@ async function render3DMap(){
           var rgb=DENS_COLORS[idx!==undefined?idx:2];
           return [rgb[0],rgb[1],rgb[2],220];
         },
-        getLineColor:[255,255,255,10],
+        getLineColor:[80,80,80,15],
         lineWidthMinPixels:0,
         pickable:true,
         autoHighlight:true,
-        highlightColor:[255,255,255,60]
+        highlightColor:[0,0,0,40]
       }),
       // Municipality outlines overlay
       new deck.GeoJsonLayer({
@@ -2580,7 +2570,7 @@ async function render3DMap(){
         data:MUNICIPIOS_GJ,
         stroked:true,
         filled:false,
-        getLineColor:[255,255,255,100],
+        getLineColor:[60,60,60,140],
         lineWidthUnits:'pixels',
         getLineWidth:1,
         lineWidthMinPixels:1,
