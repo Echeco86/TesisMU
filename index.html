@@ -1127,7 +1127,6 @@ async function _ensureYearLayer(yr){
     if(!resp.ok) throw new Error('HTTP '+resp.status);
     var gj=await resp.json();
     map.addSource('year-'+yr,{type:'geojson',data:gj});
-    // Insertar antes de los límites municipales para que queden debajo
     map.addLayer({
       id:layerId,
       type:'fill',
