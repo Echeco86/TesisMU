@@ -374,6 +374,14 @@ footer a:hover{color:var(--text)}
 .is-cell{background:var(--card);padding:22px 24px}
 .is-cell .isv{font-family:'Fraunces',serif;font-size:34px;font-weight:900;line-height:1;display:block}
 .is-cell .isl{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-top:6px}
+.mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border)}
+@media(max-width:640px){.mini-stats{grid-template-columns:repeat(2,1fr)}}
+.ms-cell{background:var(--card);padding:15px 18px;border-left:3px solid transparent;display:flex;flex-direction:column}
+.ms-cell.a1{border-left-color:#3aff33}.ms-cell.a2{border-left-color:#1ec3e6}.ms-cell.a3{border-left-color:#854bfa}
+.ms-cell.a4{border-left-color:#e33943}.ms-cell.a5{border-left-color:#faa523}.ms-cell.a6{border-left-color:#17d4a0}
+.msv{font-family:'Fraunces',serif;font-size:22px;font-weight:900;line-height:1;display:block;color:var(--text)}
+.msl{font-size:8.5px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-top:5px;display:block}
+.msd{font-size:10px;color:#555;margin-top:5px;line-height:1.5;display:block}
 .sc-chapters{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-bottom:1px solid var(--border)}
 @media(max-width:760px){.sc-chapters{grid-template-columns:1fr}}
 .sc-item{background:var(--bg);padding:36px 28px;opacity:0;transform:translateY(16px);transition:opacity .65s ease,transform .65s ease}
@@ -538,6 +546,38 @@ select:focus-visible,input:focus-visible{border-color:var(--text);outline:2px so
     <div class="is-cell"><span class="isv">+75%</span><span class="isl">Crecimiento poblacional</span></div>
     <div class="is-cell"><span class="isv">+94%</span><span class="isl">Multiplicación de núcleos</span></div>
     <div class="is-cell"><span class="isv">806→1566</span><span class="isl">Núcleos construidos</span></div>
+  </div>
+  <div class="mini-stats">
+    <div class="ms-cell a1">
+      <span class="msv">2.1M → 3.7M</span>
+      <span class="msl">Habitantes provinciales</span>
+      <span class="msd">La provincia sumó 1.6 millones de personas en 40 años. El suelo construido creció el doble de velocidad.</span>
+    </div>
+    <div class="ms-cell a2">
+      <span class="msv">+45%</span>
+      <span class="msl">Más superficie por habitante</span>
+      <span class="msd">En 2020 se ocupa un 45% más de suelo construido por persona que en 1980 — señal directa de sprawl.</span>
+    </div>
+    <div class="ms-cell a3">
+      <span class="msv">60%</span>
+      <span class="msl">Localidades más dispersas</span>
+      <span class="msd">6 de cada 10 municipios tienen densidad media construida menor en 2020 que en 1980.</span>
+    </div>
+    <div class="ms-cell a4">
+      <span class="msv">60</span>
+      <span class="msl">Localidades en declive</span>
+      <span class="msd">60 municipios y comunas perdieron más del 5% de su población, con suelo construido que persiste o crece.</span>
+    </div>
+    <div class="ms-cell a5">
+      <span class="msv">78%</span>
+      <span class="msl">Expansión supera al crecimiento</span>
+      <span class="msd">En 8 de cada 10 localidades el tejido construido creció más rápido que la población.</span>
+    </div>
+    <div class="ms-cell a6">
+      <span class="msv">117</span>
+      <span class="msl">Comunas bajo 500 hab.</span>
+      <span class="msd">El 27% de las localidades tiene menos de 500 habitantes en 2020, con alta vulnerabilidad territorial.</span>
+    </div>
   </div>
   <div class="sc-chapters">
     <div class="sc-item" id="sc1">
