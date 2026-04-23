@@ -25,8 +25,8 @@
 <meta name="twitter:image" content="https://raw.githubusercontent.com/Echeco86/TesisMU/main/foto-1776705581349.jpg">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&family=Fraunces:opsz,wght@9..144,300;9..144,600;9..144,900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"/>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <!-- deck.gl se carga dinámicamente solo cuando el usuario activa Vista 3D -->
 <style>
 :root{
@@ -1014,7 +1014,7 @@ const RCOLORS=['#d4a017','#2d6a9f','#5a2db0','#9a2020','#1a6a3a','#8a1a50','#1a6
 let charts={},activeYrs=new Set([1980,1990,2000,2010,2020]),tblYr=2020,tblPage=0,sortCol='pob',resYr=2020;
 let currentRegInd='pob';
 let cmpSels=['CORDOBA','RIO CUARTO','VILLA MARIA'],selectedMun="CORDOBA";
-let map,munLayer,mapActiveYrs=new Set([2020]);
+let map,mapActiveYrs=new Set([2020]);
 
 const fmt=(n,d=0)=>n==null||isNaN(n)?'—':new Intl.NumberFormat('es-AR',{maximumFractionDigits:d}).format(n);
 const pct=(a,b)=>(!a||!b)?null:((b-a)/a*100).toFixed(1);
@@ -1032,16 +1032,12 @@ function showSec(id,btn){
   if(id==='mapa'){
     if(!_secInited.mapa){
       _secInited.mapa=true;
-      // Leaflet necesita que el contenedor sea visible antes de inicializar
-      setTimeout(function(){
-        initMap();
-        if(!layerActive[2020]) toggleMapYr(2020);
-      },50);
+      setTimeout(function(){ initMap(); },50);
     } else {
       setTimeout(function(){
         if(map){
-          map.invalidateSize();
-          map.fitBounds([[-34.858,-65.769],[-29.512,-61.788]],{padding:[10,10]});
+          map.resize();
+          map.fitBounds([[-65.769,-34.858],[-61.788,-29.512]],{padding:10});
         }
       },150);
     }
@@ -1054,9 +1050,7 @@ function showSec(id,btn){
   if(id==='intro') initScrollyObserver();
 }
 
-// ── MAP ──
-
-
+// ── MAP (MapLibre GL JS) ──
 
 const FGB_COLORS = {
   1980: ['#d6f5d4', '#aef0ab', '#86eb82', '#5de659', '#28c924'],
@@ -1065,176 +1059,234 @@ const FGB_COLORS = {
   2010: ['#f2d8da', '#eeb3b6', '#eb8d93', '#e7686f', '#e33943'],
   2020: ['#f5e9d5', '#f6d9ab', '#f7c981', '#f8b957', '#faa523'],
 };
-const FGB_CAT_IDX = {
-  'muy baja':0,'muy bajo':0,
-  'baja':1,'bajo':1,
-  'media':2,'medio':2,
-  'alta':3,'alto':3,
-  'muy alta':4,'muy alto':4
-};
 const FGB_CAT_LABELS = ['Muy Baja','Baja','Media','Alta','Muy Alta'];
 
-// Multi-layer system: each year has its own layer and opacity
-var geoLayers = {1980:null, 1990:null, 2000:null, 2010:null, 2020:null};
 var layerOpacity = {1980:0.85, 1990:0.85, 2000:0.85, 2010:0.85, 2020:0.85};
-var layerActive = {1980:false, 1990:false, 2000:false, 2010:false, 2020:false};
-var layerLoading = {1980:false, 1990:false, 2000:false, 2010:false, 2020:false};
+var layerActive  = {1980:false, 1990:false, 2000:false, 2010:false, 2020:false};
+var _mapLoaded   = false;
+var _pendingYrs  = [];
 
-var CAT_IDX_MAP = {
-  'muy baja':0,'muy bajo':0,'baja':1,'bajo':1,
-  'media':2,'medio':2,'alta':3,'alto':3,
-  'muy alta':4,'muy alto':4
-};
-
-async function renderGeoLayer(yr){
-  if(!map) return;
-  if(layerLoading[yr]) return;
-  layerLoading[yr] = true;
-  var cols = FGB_COLORS[yr] || FGB_COLORS[2020];
-  var opa = layerOpacity[yr];
-  var loadMsg = document.getElementById('mapLoadMsg');
-  var loadText = document.getElementById('mapLoadText');
-  if(loadMsg){ if(loadText) loadText.textContent='Cargando capa '+yr+'...'; loadMsg.style.display='block'; }
-  try {
-    var url = 'https://raw.githubusercontent.com/Echeco86/TesisMU/main/'+yr+'_Ligth.geojson';
-    var resp = await fetch(url);
-    if(!resp.ok) throw new Error('HTTP '+resp.status);
-    var gj = await resp.json();
-    geoLayers[yr] = L.geoJSON(gj, {
-      style: function(feature){
-        var props = feature.properties || {};
-        var rawCat = props.Dens_Cat || props.Densi_Cat || props.dens_cat || props.Dens_cat || props.dens_Cat || '';
-        var catIdx = CAT_IDX_MAP[rawCat.toLowerCase().trim()];
-        var color = (catIdx !== undefined) ? (cols[catIdx] || '#aaa') : '#aaa';
-        return { fillColor: color, fillOpacity: opa, color: color, weight: 0.5, opacity: opa };
-      },
-      onEachFeature: function(feature, layer){
-        var props = feature.properties || {};
-        var rawCat = props.Dens_Cat || props.Densi_Cat || props.dens_cat || props.Dens_cat || props.dens_Cat || '';
-        // Tooltip enriquecido (mejora #4)
-        var tip = '<b>'+yr+'</b>';
-        if(rawCat) tip += ' · '+rawCat;
-        layer.bindTooltip(tip, {sticky:true, className:'dens-tooltip'});
-      }
-    }).addTo(map);
-    if(loadMsg) loadMsg.style.display='none';
-    updateDensLegend();
-    console.log('Capa '+yr+' cargada OK');
-  } catch(e){
-    var lt=document.getElementById('mapLoadText');
-    if(loadMsg){ if(lt) lt.textContent='Error '+yr+': '+e.message; loadMsg.style.display='block'; setTimeout(function(){if(loadMsg)loadMsg.style.display='none';},3000); }
-    console.error('GeoJSON error '+yr+':', e);
-    layerActive[yr] = false;
-    var btn = document.getElementById('yrb-'+yr);
-    if(btn) btn.classList.add('off');
-  }
-  layerLoading[yr] = false;
+// Compute bounding box [[minLng,minLat],[maxLng,maxLat]] from a GeoJSON feature
+function featureBBox(feat){
+  var mn=[Infinity,Infinity], mx=[-Infinity,-Infinity];
+  function ring(r){ r.forEach(function(c){ if(c[0]<mn[0])mn[0]=c[0]; if(c[1]<mn[1])mn[1]=c[1]; if(c[0]>mx[0])mx[0]=c[0]; if(c[1]>mx[1])mx[1]=c[1]; }); }
+  var g=feat.geometry;
+  if(g.type==='Polygon') g.coordinates.forEach(ring);
+  else if(g.type==='MultiPolygon') g.coordinates.forEach(function(p){p.forEach(ring);});
+  return [[mn[0],mn[1]],[mx[0],mx[1]]];
 }
 
-function setLayerOpacity(yr, val){
-  var v = parseInt(val)/100;
-  layerOpacity[yr] = v;
-  if(geoLayers[yr]){
-    geoLayers[yr].setStyle({fillOpacity: v, opacity: v});
-  }
+// Build MapLibre match expression for density category → color
+function _densColorExpr(yr){
+  var c=FGB_COLORS[yr];
+  // coalesce handles the inconsistent field names across years
+  var field=['downcase',['coalesce',['get','dens_cat'],['get','Dens_Cat'],['get','Densi_Cat'],['get','Dens_cat'],'']];
+  return ['match',field,
+    'muy baja',c[0],'muy bajo',c[0],
+    'baja',c[1],'bajo',c[1],
+    'media',c[2],'medio',c[2],
+    'alta',c[3],'alto',c[3],
+    'muy alta',c[4],'muy alto',c[4],
+    '#ccc'];
 }
 
 function updateDensLegend(){
-  var leg = document.getElementById('densLegend');
-  var items = document.getElementById('densItems');
+  var leg=document.getElementById('densLegend');
+  var items=document.getElementById('densItems');
   if(!leg) return;
-  var activeYears = [1980,1990,2000,2010,2020].filter(function(y){ return layerActive[y]; });
-  if(activeYears.length === 0){ leg.style.display='none'; return; }
+  var activeYears=[1980,1990,2000,2010,2020].filter(function(y){return layerActive[y];});
+  if(activeYears.length===0){leg.style.display='none';return;}
   leg.style.display='block';
-  var html = '';
+  var html='';
   activeYears.forEach(function(yr){
-    var cols = FGB_COLORS[yr] || FGB_COLORS[2020];
-    html += '<div style="font-size:9px;font-weight:700;color:'+YC[yr]+';margin-bottom:3px;padding-top:4px;border-top:1px solid var(--border)">'+yr+'</div>';
-    FGB_CAT_LABELS.forEach(function(label, i){
-      html += '<div style="display:flex;align-items:center;gap:5px;padding:1px 0">'+
+    var cols=FGB_COLORS[yr];
+    html+='<div style="font-size:9px;font-weight:700;color:'+YC[yr]+';margin-bottom:3px;padding-top:4px;border-top:1px solid var(--border)">'+yr+'</div>';
+    FGB_CAT_LABELS.forEach(function(label,i){
+      html+='<div style="display:flex;align-items:center;gap:5px;padding:1px 0">'+
         '<div style="width:10px;height:10px;border-radius:2px;background:'+cols[i]+';flex-shrink:0;border:1px solid rgba(0,0,0,.1)"></div>'+
         '<span style="font-size:10px">'+label+'</span></div>';
     });
   });
-  if(items) items.innerHTML = html;
+  if(items) items.innerHTML=html;
 }
+
+// Load a year's GeoJSON and add it as a MapLibre fill layer (lazy, cached).
+// Inserts the layer below the municipality outlines so interaction layers stay on top.
+async function _ensureYearLayer(yr){
+  if(!_mapLoaded){_pendingYrs.push(yr);return;}
+  var layerId='density-fill-'+yr;
+  if(map.getLayer(layerId)){
+    map.setLayoutProperty(layerId,'visibility','visible');
+    return;
+  }
+  var loadMsg=document.getElementById('mapLoadMsg');
+  var loadTxt=document.getElementById('mapLoadText');
+  if(loadMsg){if(loadTxt) loadTxt.textContent='Cargando capa '+yr+'...';loadMsg.style.display='block';}
+  try{
+    var resp=await fetch(yr+'_Ligth.geojson');
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    var gj=await resp.json();
+    map.addSource('year-'+yr,{type:'geojson',data:gj});
+    map.addLayer({
+      id:layerId,
+      type:'fill',
+      source:'year-'+yr,
+      paint:{'fill-color':_densColorExpr(yr),'fill-opacity':layerOpacity[yr]}
+    },'muni-outline'); // insert below municipality layers
+    if(loadMsg) loadMsg.style.display='none';
+  }catch(e){
+    if(loadMsg){if(loadTxt) loadTxt.textContent='Error '+yr+': '+e.message;setTimeout(function(){if(loadMsg)loadMsg.style.display='none';},3000);}
+    layerActive[yr]=false;
+    var btn=document.getElementById('yrb-'+yr);
+    if(btn) btn.classList.add('off');
+  }
+}
+
 function initMap(){
-  map=L.map('map',{center:[-32.18,-63.78],zoom:7,zoomControl:false,preferCanvas:true});
-  L.control.zoom({position:'bottomright'}).addTo(map);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',{
-    attribution:'&copy; CARTO',subdomains:'abcd',maxZoom:18,opacity:0.6
-  }).addTo(map);
+  map=new maplibregl.Map({
+    container:'map',
+    style:{
+      version:8,
+      sources:{
+        'carto':{
+          type:'raster',
+          tiles:[
+            'https://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
+            'https://b.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
+            'https://c.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
+            'https://d.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png'
+          ],
+          tileSize:256,
+          attribution:'&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        },
+        'municipios':{type:'geojson',data:MUNICIPIOS_GJ}
+      },
+      layers:[
+        {id:'carto-base',type:'raster',source:'carto',paint:{'raster-opacity':0.6}}
+      ]
+    },
+    center:[-63.78,-32.18],
+    zoom:7
+  });
 
-  function renderGeoLayer_inner(){}  // placeholder
+  map.addControl(new maplibregl.NavigationControl(),'bottom-right');
+  map.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-left');
 
-  // geo layer handled globally
+  map.on('load',function(){
+    _mapLoaded=true;
 
-  // Fit map to province bounds on init
-  const PROVINCE_BOUNDS=[[-34.858,-65.769],[-29.512,-61.788]];
-  map.fitBounds(PROVINCE_BOUNDS,{padding:[10,10]});
+    // Municipality outline (always visible, from inline GeoJSON)
+    map.addLayer({
+      id:'muni-outline',
+      type:'line',
+      source:'municipios',
+      paint:{'line-color':'#333','line-width':0.8,'line-opacity':0.35}
+    });
 
-  munLayer=L.geoJSON(MUNICIPIOS_GJ,{
-    style:{color:'#333',weight:0.8,fillOpacity:0,opacity:0.35},
-    onEachFeature:(feat,layer)=>{
-      layer.on({
-        click:()=>selectMun(feat.properties.NOMBRE,layer),
-        mouseover:e=>{if(selectedMun!==feat.properties.NOMBRE) e.target.setStyle({fillOpacity:0.06,fillColor:'#333'});},
-        mouseout:e=>{if(selectedMun!==feat.properties.NOMBRE) e.target.setStyle({fillOpacity:0});}
-      });
-    }
-  }).addTo(map);
-  renderMunList('');
-  setTimeout(function(){
-    map.invalidateSize();
-    toggleMapYr(2020);
-  }, 500);
+    // Invisible fill used solely for pointer events
+    map.addLayer({
+      id:'muni-interact',
+      type:'fill',
+      source:'municipios',
+      paint:{'fill-color':'#000','fill-opacity':0}
+    });
+
+    // Hover highlight
+    map.addLayer({
+      id:'muni-hover',
+      type:'fill',
+      source:'municipios',
+      paint:{'fill-color':'#333','fill-opacity':0.07},
+      filter:['==','NOMBRE','']
+    });
+
+    // Selected municipality highlight
+    map.addLayer({
+      id:'muni-selected',
+      type:'fill',
+      source:'municipios',
+      paint:{'fill-color':'#1a1a1a','fill-opacity':0.15},
+      filter:['==','NOMBRE','']
+    });
+
+    // Hover handlers
+    map.on('mousemove','muni-interact',function(e){
+      if(e.features.length>0){
+        var n=e.features[0].properties.NOMBRE;
+        if(n!==selectedMun) map.setFilter('muni-hover',['==','NOMBRE',n]);
+        map.getCanvas().style.cursor='pointer';
+      }
+    });
+    map.on('mouseleave','muni-interact',function(){
+      map.setFilter('muni-hover',['==','NOMBRE','']);
+      map.getCanvas().style.cursor='';
+    });
+
+    // Click → select municipality
+    map.on('click','muni-interact',function(e){
+      if(e.features.length>0){
+        selectMun(e.features[0].properties.NOMBRE, e.features[0]);
+      }
+    });
+
+    // Process any years toggled before load completed
+    var pending=_pendingYrs.splice(0);
+    pending.forEach(function(yr){_ensureYearLayer(yr);});
+
+    map.fitBounds([[-65.769,-34.858],[-61.788,-29.512]],{padding:10});
+    renderMunList('');
+    setTimeout(function(){toggleMapYr(2020);},100);
+  });
 }
 
 function toggleMapYr(yr){
-  var btn = document.getElementById('yrb-'+yr);
-  var bgs = {1980:'#edfced',1990:'#e8f9fd',2000:'#f3edff',2010:'#fef0f0',2020:'#fff5e6'};
+  var btn=document.getElementById('yrb-'+yr);
+  var bgs={1980:'#edfced',1990:'#e8f9fd',2000:'#f3edff',2010:'#fef0f0',2020:'#fff5e6'};
   if(layerActive[yr]){
-    // Desactivar: remover capa del mapa
-    layerActive[yr] = false;
-    if(geoLayers[yr]){ map.removeLayer(geoLayers[yr]); }
-    if(btn){ btn.classList.add('off'); btn.style.background='transparent'; }
+    layerActive[yr]=false;
+    if(map && map.getLayer('density-fill-'+yr)) map.setLayoutProperty('density-fill-'+yr,'visibility','none');
+    if(btn){btn.classList.add('off');btn.style.background='transparent';}
   } else {
-    // Activar
-    layerActive[yr] = true;
-    if(btn){ btn.classList.remove('off'); btn.style.background=bgs[yr]||'transparent'; }
-    if(geoLayers[yr]){
-      // Ya cargada, solo re-agregar
-      geoLayers[yr].addTo(map);
-      updateDensLegend();
-    } else {
-      renderGeoLayer(yr);
-    }
-    // Si 3D activo, renderizar ese año en deck.gl
-    if(typeof is3D!=='undefined' && is3D){
-      tlCurYr = yr;
-      render3DMap();
-    }
+    layerActive[yr]=true;
+    if(btn){btn.classList.remove('off');btn.style.background=bgs[yr]||'transparent';}
+    if(map) _ensureYearLayer(yr); // fetch GeoJSON + add layer on first use, show if cached
+    if(typeof is3D!=='undefined' && is3D){tlCurYr=yr;render3DMap();}
   }
   updateDensLegend();
 }
 
-function updateOpacity(v){}
+function setLayerOpacity(yr,val){
+  layerOpacity[yr]=parseInt(val)/100;
+  if(map && map.getLayer('density-fill-'+yr)){
+    map.setPaintProperty('density-fill-'+yr,'fill-opacity',layerOpacity[yr]);
+  }
+}
 
-function selectMun(name,layer){
-  // Show charts, hide empty state
+function selectMun(name,featOrNull){
   var es=document.getElementById('empty-state');
   var cc=document.getElementById('charts-container');
   if(es) es.style.display='none';
   if(cc) cc.style.display='flex';
 
   selectedMun=name;
-  munLayer.eachLayer(l=>l.setStyle({fillOpacity:0}));
-  layer.setStyle({fillOpacity:0.15,fillColor:'#1a1a1a'});
-  map.fitBounds(layer.getBounds(),{padding:[20,20]});
+
+  if(map){
+    map.setFilter('muni-selected',['==','NOMBRE',name]);
+    map.setFilter('muni-hover',['==','NOMBRE','']);
+  }
+
+  // Zoom to feature bounds
+  var feat=featOrNull;
+  if(!feat || !feat.geometry){
+    feat=MUNICIPIOS_GJ.features.find(function(f){return f.properties.NOMBRE===name;});
+  }
+  if(feat && feat.geometry && map){
+    try{ map.fitBounds(featureBBox(feat),{padding:20,maxZoom:12}); }catch(e){}
+  }
+
   const ld=DATA.localities[name];
   document.getElementById('mapInfoPanel').style.display='block';
   document.getElementById('mapInfoName').textContent=name;
-  // Update right panel
   document.getElementById('chartLocName').textContent=name;
   var ld2=DATA.localities[name];
   if(ld2) document.getElementById('chartLocMeta').textContent=ld2.dep+' · '+ld2.region_nombre;
@@ -1265,14 +1317,13 @@ function selectMun(name,layer){
 function goToLocalidad(){
   if(!selectedMun) return;
   showSec('analisis', document.querySelectorAll('nav button')[2]);
-  var rf = document.getElementById('aRegFilt');
-  if(rf && DATA.localities[selectedMun]) rf.value = DATA.localities[selectedMun].region_nombre;
+  var rf=document.getElementById('aRegFilt');
+  if(rf && DATA.localities[selectedMun]) rf.value=DATA.localities[selectedMun].region_nombre;
   buildAnalisis();
 }
 
 function jumpToMunFromMap(){
   if(!selectedMun) return;
-  // Ir a la sección del mapa y hacer scroll al panel derecho con los gráficos
   document.getElementById('chartLocName').textContent=selectedMun;
   renderCharts();
 }
@@ -1282,13 +1333,13 @@ function renderMunList(q){
   const f=LOCS.filter(l=>l.toLowerCase().includes(q.toLowerCase())).slice(0,60);
   el.innerHTML=f.map(l=>{
     const safe=l.replace(/'/g,"\\'");
-    return '<div onclick="zoomToMun(\'' +safe+ '\')" style="padding:5px 6px;cursor:pointer;border-radius:4px;transition:background .1s" onmouseover="this.style.background=\'var(--surface)\'" onmouseout="this.style.background=\'\'">'+l+'</div>';
+    return '<div onclick="zoomToMun(\''+safe+'\')" style="padding:5px 6px;cursor:pointer;border-radius:4px;transition:background .1s" onmouseover="this.style.background=\'var(--surface)\'" onmouseout="this.style.background=\'\'">'+l+'</div>';
   }).join('');
 }
 function filterMapSearch(q){renderMunList(q);}
 function zoomToMun(name){
-  if(!munLayer) return;
-  munLayer.eachLayer(function(layer){if(layer.feature.properties.NOMBRE===name) selectMun(name,layer);});
+  var feat=MUNICIPIOS_GJ.features.find(function(f){return f.properties.NOMBRE===name;});
+  if(feat) selectMun(name,feat);
 }
 
 // ── LOCALIDAD ──
@@ -2443,11 +2494,12 @@ function toggle3D(){
     document.getElementById('map').style.display='block';
     if(info) info.style.display='none';
     if(deckInstance){ deckInstance.finalize(); deckInstance=null; }
+    if(map) map.resize();
   }
 }
 async function render3DMap(){
   var yr=tlCurYr||2020;
-  var url='https://raw.githubusercontent.com/Echeco86/TesisMU/main/'+yr+'_Ligth.geojson';
+  var url=yr+'_Ligth.geojson';
   var loadMsg=document.getElementById('mapLoadMsg');
   var loadTxt=document.getElementById('mapLoadText');
   if(loadMsg){ if(loadTxt) loadTxt.textContent='Cargando vista 3D '+yr+'...'; loadMsg.style.display='block'; }
