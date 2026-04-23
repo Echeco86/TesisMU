@@ -1756,7 +1756,7 @@ function renderTbl(){
           '<button onclick="downloadMapPDF(\''+r.name.replace(/'/g,"\\'")+'\',' +
             '\''+r.region_nombre.replace(/'/g,"\\'")+'\''+
             ',this)" '+
-          'title="Descargar mapa PDF · '+r.region_nombre+'_'+r.name+'" '+
+          'title="Descargar mapa · '+r.name+'" '+
           'style="display:inline-flex;align-items:center;gap:3px;color:var(--muted);font-size:9px;background:none;border:1px solid var(--border);border-radius:4px;padding:3px 7px;cursor:pointer;font-family:Space Mono,monospace;transition:all .2s" '+
           'onmouseover="this.style.borderColor=\'var(--text)\';this.style.color=\'var(--text)\'" '+
           'onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--muted)\'"'+
@@ -2376,13 +2376,13 @@ function _normStr(s){
 function _loadDriveFiles(cb){
   if(_driveFilesCache){ cb(_driveFilesCache); return; }
   if(!DRIVE_API_KEY){ cb([]); return; }
-  var q = encodeURIComponent("'"+DRIVE_FOLDER+"' in parents and trashed=false and mimeType='application/pdf'");
+  var q = encodeURIComponent("'"+DRIVE_FOLDER+"' in parents and trashed=false and mimeType='image/png'");
   fetch('https://www.googleapis.com/drive/v3/files?q='+q+'&fields=files(id,name)&pageSize=1000&key='+DRIVE_API_KEY)
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.error){ console.warn('Drive API error:', d.error.code, d.error.message); _driveFilesCache=[]; }
       else { _driveFilesCache = d.files||[]; }
-      console.log('Drive files:', _driveFilesCache.length, _driveFilesCache.map(function(f){return f.name;}));
+      console.log('Drive files cargados:', _driveFilesCache.length);
       cb(_driveFilesCache);
     })
     .catch(function(e){ console.error('Drive API fetch failed:', e); cb([]); });
@@ -2402,40 +2402,20 @@ function downloadMapPDF(localidad, region, btnEl){
       return;
     }
 
-    var nReg = _normStr(region);
     var nLoc = _normStr(localidad);
-    console.log('Buscando:', {region: nReg, localidad: nLoc});
-
     var match = null;
 
-    // 1) Match exacto: separar el nombre raw en '_' ANTES de normalizar
+    // 1) Match exacto: nombre del archivo (sin extensión) == nombre de localidad normalizado
     for(var i=0; i<files.length; i++){
-      var raw = files[i].name.replace(/\.pdf$/i,'');
-      var sep = raw.indexOf('_');
-      if(sep < 0) continue;
-      var fReg = _normStr(raw.slice(0, sep));
-      var fLoc = _normStr(raw.slice(sep + 1));
-      if(fReg === nReg && fLoc === nLoc){ match = files[i]; break; }
+      if(_normStr(files[i].name.replace(/\.[^.]+$/,'')) === nLoc){ match=files[i]; break; }
     }
 
-    // 2) Solo por localidad (ignora región)
-    if(!match){
-      for(var i=0; i<files.length; i++){
-        var raw = files[i].name.replace(/\.pdf$/i,'');
-        var sep = raw.indexOf('_');
-        var fLoc = sep >= 0 ? _normStr(raw.slice(sep + 1)) : _normStr(raw);
-        if(fLoc === nLoc){ match = files[i]; break; }
-      }
-    }
-
-    // 3) Fallback: localidad aparece en cualquier parte del nombre normalizado
+    // 2) Fallback: localidad aparece en cualquier parte del nombre normalizado
     if(!match){
       for(var i=0;i<files.length;i++){
         if(_normStr(files[i].name).indexOf(nLoc)!==-1){ match=files[i]; break; }
       }
     }
-
-    console.log('Match encontrado:', match ? match.name : 'ninguno');
 
     if(match){
       var a=document.createElement('a');
