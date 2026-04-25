@@ -1343,8 +1343,14 @@ function selectMun(name,featOrNull){
   if(!feat || !feat.geometry){
     feat=MUNICIPIOS_GJ.features.find(function(f){return f.properties.NOMBRE===name;});
   }
-  if(feat && feat.geometry && map){
-    try{ map.fitBounds(featureBBox(feat),{padding:20,maxZoom:12}); }catch(e){}
+  if(feat && feat.geometry){
+    if(typeof is3D!=='undefined'&&is3D&&deckInstance){
+      // En vista 3D: volar al municipio y actualizar highlight
+      _fly3DTo(feat);
+      deckInstance.setProps({layers:_build3DLayers(tlCurYr||2020,loaded3D[tlCurYr||2020])});
+    } else if(map){
+      try{ map.fitBounds(featureBBox(feat),{padding:20,maxZoom:12}); }catch(e){}
+    }
   }
 
   const ld=DATA.localities[name];
@@ -2503,6 +2509,7 @@ function tlPlay(){
 
 // ══ 3D MAP (deck.gl) ══
 var is3D=false, deckInstance=null, loaded3D={};
+var _3dViewState=null; // persiste la posición del usuario entre re-renders
 
 // Carga deck.gl dinámicamente la primera vez que se necesita
 var _deckReady=false, _deckPending=[];
@@ -2543,18 +2550,94 @@ function toggle3D(){
     document.getElementById('map').style.display='block';
     if(info) info.style.display='none';
     if(deckInstance){ deckInstance.finalize(); deckInstance=null; }
+    _3dViewState=null;
     if(map) map.resize();
   }
 }
+function _build3DLayers(yr, ghslData){
+  var DENS_COLORS=[[80,180,255],[60,220,160],[250,210,60],[255,130,40],[220,40,60]];
+  var DENS_ELEV=[120,400,1000,2200,3800];
+  var CAT3D={'muy baja':0,'muy bajo':0,'baja':1,'bajo':1,'media':2,'medio':2,'alta':3,'alto':3,'muy alta':4,'muy alto':4};
+  function catIdx(f){
+    var props=f.properties||{};
+    var cat=(props.Dens_Cat||props.Densi_Cat||props.dens_cat||props.Dens_cat||'').toLowerCase().trim();
+    var idx=CAT3D[cat];
+    if(idx===undefined){ var v=props.DN||props.BU||props.dn||props.bu||0; idx=v>0?Math.min(Math.floor(v/2000),4):2; }
+    return idx!==undefined?idx:2;
+  }
+  var selFeatures=selectedMun
+    ? MUNICIPIOS_GJ.features.filter(function(f){return f.properties.NOMBRE===selectedMun;})
+    : [];
+  return [
+    new deck.TileLayer({
+      id:'basemap-3d',
+      data:['https://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
+            'https://b.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
+            'https://c.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
+            'https://d.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png'],
+      tileSize:256,
+      renderSubLayers:function(props){
+        var bb=props.tile.boundingBox;
+        return new deck.BitmapLayer(props,{data:null,image:props.data,
+          bounds:[bb[0][0],bb[0][1],bb[1][0],bb[1][1]]});
+      }
+    }),
+    new deck.GeoJsonLayer({
+      id:'ghsl3d-'+yr,
+      data:ghslData,
+      extruded:true, wireframe:false,
+      getElevation:function(f){ return DENS_ELEV[catIdx(f)]; },
+      getFillColor:function(f){ var rgb=DENS_COLORS[catIdx(f)]; return [rgb[0],rgb[1],rgb[2],220]; },
+      getLineColor:[80,80,80,15], lineWidthMinPixels:0
+    }),
+    // Highlight del municipio seleccionado
+    selFeatures.length ? new deck.GeoJsonLayer({
+      id:'muni-sel-3d',
+      data:{type:'FeatureCollection',features:selFeatures},
+      stroked:true, filled:true,
+      getLineColor:[30,30,30,230], lineWidthUnits:'pixels', getLineWidth:2, lineWidthMinPixels:2,
+      getFillColor:[30,30,30,40],
+      parameters:{depthTest:false}
+    }) : null,
+    // Capa de municipios: transparente pero pickable para click/hover
+    new deck.GeoJsonLayer({
+      id:'municipios3d',
+      data:MUNICIPIOS_GJ,
+      stroked:true, filled:true,
+      getLineColor:[60,60,60,140], getFillColor:[0,0,0,0],
+      lineWidthUnits:'pixels', getLineWidth:1, lineWidthMinPixels:1,
+      parameters:{depthTest:false},
+      pickable:true,
+      autoHighlight:true,
+      highlightColor:[80,80,80,30],
+      onClick:function(info){
+        if(info.object) selectMun(info.object.properties.NOMBRE, info.object);
+      }
+    })
+  ].filter(Boolean);
+}
+
+function _fly3DTo(feat){
+  if(!deckInstance||!feat||!feat.geometry) return;
+  var bb=featureBBox(feat);
+  var cx=(bb[0][0]+bb[1][0])/2;
+  var cy=(bb[0][1]+bb[1][1])/2;
+  var span=Math.max(Math.abs(bb[1][1]-bb[0][1]),Math.abs(bb[1][0]-bb[0][0]));
+  var zoom=Math.min(12,Math.max(8,-Math.log2(span)+9));
+  var vs={longitude:cx,latitude:cy,zoom:zoom,pitch:52,bearing:0,transitionDuration:800};
+  try{ vs.transitionInterpolator=new deck.FlyToInterpolator({speed:1.5}); }catch(e){}
+  _3dViewState=vs;
+  deckInstance.setProps({viewState:vs});
+}
+
 async function render3DMap(){
   var yr=tlCurYr||2020;
-  var url=yr+'_Ligth.geojson';
   var loadMsg=document.getElementById('mapLoadMsg');
   var loadTxt=document.getElementById('mapLoadText');
   if(loadMsg){ if(loadTxt) loadTxt.textContent='Cargando vista 3D '+yr+'...'; loadMsg.style.display='block'; }
   if(!loaded3D[yr]){
     try{
-      var resp=await fetch(url);
+      var resp=await fetch(yr+'_Ligth.geojson');
       if(!resp.ok) throw new Error('HTTP '+resp.status);
       loaded3D[yr]=await resp.json();
     }catch(e){
@@ -2569,95 +2652,30 @@ async function render3DMap(){
   document.getElementById('map').style.display='none';
   var dc=document.getElementById('deckCanvas');
   dc.style.display='block';
-  if(deckInstance){ deckInstance.finalize(); deckInstance=null; }
   if(typeof deck==='undefined'){
-    dc.style.display='none';
-    document.getElementById('map').style.display='block';
+    dc.style.display='none'; document.getElementById('map').style.display='block';
     is3D=false; alert('deck.gl no disponible'); return;
   }
-  var YC3D={
-    1980:[40,201,36], 1990:[30,195,230],
-    2000:[133,75,250], 2010:[227,57,67], 2020:[250,165,35]
-  };
-  var col=YC3D[yr]||[133,75,250];
-  // Colores universales por densidad (escala fría→caliente, independiente del año)
-  var DENS_COLORS=[[80,180,255],[60,220,160],[250,210,60],[255,130,40],[220,40,60]];
-  // Elevaciones fijas por categoría (normalizadas, consistentes entre años)
-  var DENS_ELEV=[120,400,1000,2200,3800];
-  var CAT3D={'muy baja':0,'muy bajo':0,'baja':1,'bajo':1,'media':2,'medio':2,'alta':3,'alto':3,'muy alta':4,'muy alto':4};
+  var defaultVS={longitude:-64.2,latitude:-31.4,zoom:6.5,pitch:52,bearing:-18};
+  var initVS=_3dViewState||defaultVS;
+  // Si hay un municipio seleccionado y no tenemos view state guardado, partir del municipio
+  if(!_3dViewState && selectedMun){
+    var sf=MUNICIPIOS_GJ.features.find(function(f){return f.properties.NOMBRE===selectedMun;});
+    if(sf){ var bb=featureBBox(sf); initVS={longitude:(bb[0][0]+bb[1][0])/2,latitude:(bb[0][1]+bb[1][1])/2,zoom:10,pitch:52,bearing:0}; }
+  }
+  if(deckInstance){ deckInstance.finalize(); deckInstance=null; }
   deckInstance=new deck.Deck({
     canvas:dc,
-    initialViewState:{longitude:-64.2,latitude:-31.4,zoom:6.5,pitch:52,bearing:-18},
+    viewState:initVS,
+    onViewStateChange:function(info){ _3dViewState=info.viewState; deckInstance.setProps({viewState:_3dViewState}); },
     controller:true,
     style:{background:'#f5f3ee'},
-    layers:[
-      // Base cartográfica CartoDB light (misma que el mapa 2D)
-      new deck.TileLayer({
-        id:'basemap-3d',
-        data:[
-          'https://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
-          'https://b.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
-          'https://c.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
-          'https://d.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png'
-        ],
-        tileSize:256,
-        renderSubLayers:function(props){
-          var bb=props.tile.boundingBox;
-          return new deck.BitmapLayer(props,{
-            data:null,
-            image:props.data,
-            bounds:[bb[0][0],bb[0][1],bb[1][0],bb[1][1]]
-          });
-        }
-      }),
-      new deck.GeoJsonLayer({
-        id:'ghsl3d-'+yr,
-        data:loaded3D[yr],
-        extruded:true,
-        wireframe:false,
-        getElevation:function(f){
-          var props=f.properties||{};
-          var cat=(props.Dens_Cat||props.Densi_Cat||props.dens_cat||props.Dens_cat||'').toLowerCase().trim();
-          var idx=CAT3D[cat];
-          if(idx===undefined){
-            var v=props.DN||props.BU||props.dn||props.bu||0;
-            idx=v>0?Math.min(Math.floor(v/2000),4):2;
-          }
-          return DENS_ELEV[idx!==undefined?idx:2];
-        },
-        getFillColor:function(f){
-          var props=f.properties||{};
-          var cat=(props.Dens_Cat||props.Densi_Cat||props.dens_cat||props.Dens_cat||'').toLowerCase().trim();
-          var idx=CAT3D[cat];
-          if(idx===undefined){
-            var v=props.DN||props.BU||props.dn||props.bu||0;
-            idx=v>0?Math.min(Math.floor(v/2000),4):2;
-          }
-          var rgb=DENS_COLORS[idx!==undefined?idx:2];
-          return [rgb[0],rgb[1],rgb[2],220];
-        },
-        getLineColor:[80,80,80,15],
-        lineWidthMinPixels:0,
-        pickable:true,
-        autoHighlight:true,
-        highlightColor:[0,0,0,40]
-      }),
-      // Municipality outlines overlay
-      new deck.GeoJsonLayer({
-        id:'municipios3d',
-        data:MUNICIPIOS_GJ,
-        stroked:true,
-        filled:false,
-        getLineColor:[60,60,60,140],
-        lineWidthUnits:'pixels',
-        getLineWidth:1,
-        lineWidthMinPixels:1,
-        parameters:{depthTest:false}
-      })
-    ],
+    layers:_build3DLayers(yr,loaded3D[yr]),
     getTooltip:function(o){
-      if(!o.object) return null;
-      var v=o.object.properties.DN||o.object.properties.BU||o.object.properties.dn||0;
+      if(!o.object||!o.object.properties) return null;
+      var p=o.object.properties;
+      if(p.NOMBRE) return {html:'<div style="font-family:Space Mono,monospace;font-size:10px;background:#1a1a1a;color:#f5f3ee;padding:6px 10px;border-radius:4px"><strong>'+p.NOMBRE+'</strong></div>'};
+      var v=p.DN||p.BU||p.dn||0;
       return {html:'<div style="font-family:Space Mono,monospace;font-size:10px;background:#1a1a1a;color:#f5f3ee;padding:6px 10px;border-radius:4px">Valor BU: <strong>'+v+'</strong></div>'};
     }
   });
