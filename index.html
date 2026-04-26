@@ -101,7 +101,11 @@ select:focus,input:focus{border-color:var(--text)}
 .reg-top{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:0}
 @media(max-width:800px){.reg-top{grid-template-columns:1fr}}
 .reg-chart-box{display:flex;flex-direction:column}
-.reg-chart-box canvas{height:260px;min-height:0}
+/* El canvas vive dentro de .reg-canvas-wrap, que es el elemento
+   que Chart.js observa con ResizeObserver. Altura fija en el wrapper
+   rompe el loop de expansión infinita (responsive+maintainAspectRatio:false) */
+.reg-canvas-wrap{position:relative;flex:1;min-height:0;height:320px}
+.reg-canvas-wrap canvas{position:absolute;inset:0;width:100%!important;height:100%!important}
 .reg-chart-header{margin-bottom:4px}
 .reg-yr-pills{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
 #regTable{width:100%;border-collapse:collapse}
@@ -486,7 +490,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
   #chScatter1,#chScatter2,#chAnimScatter,#chTrayectoria{height:200px}
   #chDenEvol,#chScatter3,#chCmp,#chCmpRel{height:180px}
   #chConcExp,#chConcDen{height:160px}
-  .reg-chart-box canvas{height:180px}
+  .reg-canvas-wrap{height:240px}
   /* Mapa: columna única, mapa ocupa 100% ancho */
   .mapa-layout{grid-template-columns:1fr!important;height:calc(100vh - 90px)!important}
   .mapa-right{display:none!important}
@@ -915,7 +919,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
         <h3>Evolución temporal</h3>
         <div class="cs">todas las regiones · 1980–2020</div>
       </div>
-      <canvas id="chRegTime"></canvas>
+      <div class="reg-canvas-wrap"><canvas id="chRegTime"></canvas></div>
     </div>
     <div class="cc reg-chart-box">
       <div class="reg-chart-header">
@@ -929,7 +933,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
         <button class="pill" onclick="setRegYr(2010,this)" style="border-color:#e33943;color:#8a1a20">2010</button>
         <button class="pill on" onclick="setRegYr(2020,this)" style="border-color:#faa523;color:#7a4a00">2020</button>
       </div>
-      <canvas id="chRegBar"></canvas>
+      <div class="reg-canvas-wrap"><canvas id="chRegBar"></canvas></div>
     </div>
   </div>
 
