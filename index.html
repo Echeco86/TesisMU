@@ -72,13 +72,14 @@ select:focus,input:focus{border-color:var(--text)}
 .mapa-right{display:flex;flex-direction:column;background:var(--bg);border-left:1px solid var(--border);overflow:hidden}
 .mapa-right-header{padding:14px 14px 0;flex-shrink:0}
 .mapa-right-charts{flex:1;overflow-y:auto;padding:10px 14px 14px;display:flex;flex-direction:column;gap:10px}
-.mapa-right-charts .cc canvas{height:130px}
 .mapa-right-charts .cc{padding:12px 14px}
+.mapa-canvas-wrap{position:relative;height:280px;overflow:visible}
 /* Tablet (768–1024px): panel derecho más angosto, sidebar compacto */
 @media(min-width:768px) and (max-width:1024px){
   .mapa-layout{grid-template-columns:1fr 260px}
   .map-sidebar{width:180px}
   .reg-canvas-wrap{height:280px}
+  .mapa-canvas-wrap{height:250px}
 }
 .map-sidebar{position:absolute;top:10px;left:10px;z-index:1000;width:220px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:calc(100% - 20px);font-size:12px}
 .map-panel{background:rgba(255,255,255,0.95);border:1px solid var(--border);border-radius:8px;padding:10px;box-shadow:0 2px 12px rgba(0,0,0,.15);backdrop-filter:blur(4px)}
@@ -249,7 +250,7 @@ footer a:hover{color:var(--text)}
 #empty-state p{font-family:'Inter',sans-serif;font-size:13px;color:var(--muted);max-width:220px;line-height:1.6;}
 #charts-container{display:none;flex-direction:column;gap:10px;
   overflow-y:auto;padding:10px 14px 14px;}
-#charts-container .cc canvas{height:135px}
+#charts-container .mapa-canvas-wrap{height:280px}
 #charts-container .cc{padding:13px 15px;}
 /* Charts right panel */
 .mapa-right-charts-wrap{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
@@ -657,7 +658,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
   </button>
   <div class="nav-items" id="navItems">
     <button onclick="showSec('intro',this)" class="active" aria-current="page" aria-label="Introducción">Introducción</button>
-    <button onclick="showSec('mapa',this)" aria-label="Mapa Espacial interactivo">Mapa Espacial</button>
+    <button onclick="showSec('mapa',this)" aria-label="Exploración Territorial interactivo">Exploración Territorial</button>
     <button onclick="showSec('resumen',this)" aria-label="Análisis Regional">Análisis Regional</button>
     <button onclick="showSec('analisis',this)" aria-label="Análisis Exploratorio por localidad">Análisis Exploratorio</button>
     <button onclick="showSec('comparador',this)" aria-label="Comparador de localidades y regiones">Comparador</button>
@@ -851,7 +852,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
             </button>
           </div>
           <div class="cs">habitantes</div>
-          <canvas id="chL1"></canvas>
+          <div class="mapa-canvas-wrap"><canvas id="chL1"></canvas></div>
           <div class="cc-def">Dato censal (INDEC, 1980–2022) del total de habitantes por municipio o comuna. Permite identificar tendencias de crecimiento o declive y comparar la dinámica demográfica con la expansión del suelo construido.</div>
         </div>
         <div class="cc">
@@ -862,7 +863,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
             </button>
           </div>
           <div class="cs">píxeles construidos</div>
-          <canvas id="chL2"></canvas>
+          <div class="mapa-canvas-wrap"><canvas id="chL2"></canvas></div>
           <div class="cc-def">Cantidad de celdas de 100×100 m con construcción detectada por la capa GHSL (UE) en cada corte temporal. Mide la extensión territorial ocupada e indica si el crecimiento urbano supera al poblacional, revelando dispersión o suburbanización.</div>
         </div>
         <div class="cc">
@@ -873,7 +874,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
             </button>
           </div>
           <div class="cs">hab/km²</div>
-          <canvas id="chL3"></canvas>
+          <div class="mapa-canvas-wrap"><canvas id="chL3"></canvas></div>
           <div class="cc-def">Promedio del valor BU (Built-up area) de los píxeles construidos dentro de cada unidad. Expresa la intensidad constructiva del tejido urbano: valores bajos indican crecimiento extensivo; valores altos, compacidad o densificación.</div>
         </div>
         <div class="cc">
@@ -884,7 +885,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
             </button>
           </div>
           <div class="cs">cantidad de núcleos</div>
-          <canvas id="chL4"></canvas>
+          <div class="mapa-canvas-wrap"><canvas id="chL4"></canvas></div>
           <div class="cc-def">Conteo de manchas urbanas continuas y discontinuas detectadas morfológicamente. Permite distinguir entre crecimiento consolidado y aparición de núcleos aislados, revelando fragmentación territorial o procesos de suburbanización periférica.</div>
         </div>
       </div>
