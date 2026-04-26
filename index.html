@@ -421,6 +421,38 @@ select:focus-visible,input:focus-visible{border-color:var(--text);outline:2px so
   .section{display:block!important;page-break-after:always}
   #mapTimeline,.map-sidebar{display:none!important}
 }
+
+/* ── MOBILE RESPONSIVO ── */
+/* Hamburger: oculto por defecto en desktop */
+nav button.nav-hamburger{display:none;flex-direction:column;justify-content:center;gap:5px;padding:0 16px;border-bottom:none!important;height:40px;margin-left:auto;flex-shrink:0;align-self:stretch}
+nav button.nav-hamburger span{display:block;width:22px;height:2px;background:var(--text);border-radius:1px;transition:transform .25s,opacity .25s}
+nav button.nav-hamburger.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
+nav button.nav-hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px)}
+/* nav-items: display:contents hace que los botones sean hijos directos del flex en desktop */
+.nav-items{display:contents}
+
+@media(max-width:767px){
+  /* Header compacto */
+  header{padding:10px 16px;gap:8px}
+  .h-stats{display:none}
+  .h-author .email,.h-author-btn-hint{display:none}
+  .h-author{padding-left:8px}
+  /* Nav hamburguesa */
+  nav{padding:0;flex-wrap:wrap;align-items:stretch}
+  nav button.nav-hamburger{display:flex;width:100%;padding:0 16px}
+  .nav-items{display:none;flex-direction:column;width:100%;border-top:1px solid var(--border)}
+  .nav-items.open{display:flex}
+  nav .nav-items button{padding:11px 16px;border-bottom:1px solid var(--border);border-left:3px solid transparent;text-align:left;width:100%}
+  nav .nav-items button.active{border-left-color:var(--text);background:var(--surface)}
+  /* Main y footer */
+  main{padding:12px 16px 40px}
+  footer{padding:10px 16px;font-size:10px}
+  /* Grillas */
+  .kpi-grid{grid-template-columns:1fr 1fr}
+  .ctrl{gap:8px}
+  .yr-row{padding:7px 10px}
+}
 </style>
 </head>
 <body>
@@ -519,14 +551,19 @@ select:focus-visible,input:focus-visible{border-color:var(--text);outline:2px so
   </button>
 </header>
 <nav role="navigation" aria-label="Secciones del sitio">
-  <button onclick="showSec('intro',this)" class="active" aria-current="page" aria-label="Introducción">Introducción</button>
-  <button onclick="showSec('mapa',this)" aria-label="Mapa Espacial interactivo">Mapa Espacial</button>
-  <button onclick="showSec('resumen',this)" aria-label="Análisis Regional">Análisis Regional</button>
-  <button onclick="showSec('analisis',this)" aria-label="Análisis Exploratorio por localidad">Análisis Exploratorio</button>
-  <button onclick="showSec('comparador',this)" aria-label="Comparador de localidades y regiones">Comparador</button>
-  <button onclick="showSec('tabla',this)" aria-label="Tabla de datos de 427 localidades">Tabla de Datos</button>
-  <button onclick="showSec('teorico',this)" aria-label="Marco Teórico">Marco Teórico</button>
-  <button onclick="showSec('conclusiones',this)">Conclusiones</button>
+  <button class="nav-hamburger" id="navHamburger" onclick="toggleMobileNav()" aria-label="Abrir menú de navegación" aria-expanded="false" aria-controls="navItems">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-items" id="navItems">
+    <button onclick="showSec('intro',this)" class="active" aria-current="page" aria-label="Introducción">Introducción</button>
+    <button onclick="showSec('mapa',this)" aria-label="Mapa Espacial interactivo">Mapa Espacial</button>
+    <button onclick="showSec('resumen',this)" aria-label="Análisis Regional">Análisis Regional</button>
+    <button onclick="showSec('analisis',this)" aria-label="Análisis Exploratorio por localidad">Análisis Exploratorio</button>
+    <button onclick="showSec('comparador',this)" aria-label="Comparador de localidades y regiones">Comparador</button>
+    <button onclick="showSec('tabla',this)" aria-label="Tabla de datos de 427 localidades">Tabla de Datos</button>
+    <button onclick="showSec('teorico',this)" aria-label="Marco Teórico">Marco Teórico</button>
+    <button onclick="showSec('conclusiones',this)">Conclusiones</button>
+  </div>
 </nav>
 <main>
 <!-- INTRO -->
@@ -2683,6 +2720,34 @@ async function render3DMap(){
 
 </script>
 
+<script>
+function toggleMobileNav(){
+  var ham=document.getElementById('navHamburger');
+  var items=document.getElementById('navItems');
+  var open=items.classList.toggle('open');
+  ham.classList.toggle('open',open);
+  ham.setAttribute('aria-expanded',open);
+  ham.setAttribute('aria-label', open ? 'Cerrar menú de navegación' : 'Abrir menú de navegación');
+}
+function closeMobileNav(){
+  var ham=document.getElementById('navHamburger');
+  var items=document.getElementById('navItems');
+  if(!items)return;
+  items.classList.remove('open');
+  ham.classList.remove('open');
+  ham.setAttribute('aria-expanded','false');
+  ham.setAttribute('aria-label','Abrir menú de navegación');
+}
+// Cierra el menú al navegar en mobile
+document.addEventListener('DOMContentLoaded',function(){
+  var navItems=document.getElementById('navItems');
+  if(navItems){
+    navItems.addEventListener('click',function(e){
+      if(e.target.tagName==='BUTTON') closeMobileNav();
+    });
+  }
+});
+</script>
 <!-- Schema.org structured data -->
 <script type="application/ld+json">
 [
