@@ -508,6 +508,46 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
     border-bottom:1px solid var(--border)!important
   }
   .map-panel:last-child{border-bottom:none!important}
+
+  /* ── MARCO TEÓRICO ──
+     theory-grid ya tiene @media(max-width:800px)→1col, cubre mobile ✓
+     method-table (4 cols) necesita scroll horizontal */
+  .theory-block{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .method-table{min-width:460px} /* tabla conserva ancho natural, padre scrollea */
+
+  /* ── CONCLUSIONES ──
+     Timeline: 5 celdas flex en 375px = ~68px c/u → apilar verticalmente */
+  .timeline-strip{flex-direction:column;border-radius:8px}
+  .timeline-cell{
+    flex:none;display:flex;align-items:center;gap:12px;
+    text-align:left;padding:9px 14px;
+    border-bottom:1px solid rgba(0,0,0,.08)
+  }
+  .timeline-cell:last-child{border-bottom:none}
+  .timeline-cell .yr{font-size:14px;min-width:36px;display:inline;margin-bottom:0}
+
+  /* conc-item: número + texto → OK a 375px (36px num + 16px gap + ~291px texto) ✓ */
+  .conc-item{padding:14px 16px;gap:12px}
+  .conc-num{font-size:22px;width:28px}
+
+  /* ── COMPARADOR ── */
+  #comparador .ctrl{flex-direction:column;align-items:stretch;gap:8px}
+  #comparador .ctrl .ctrl-g{width:100%}
+  #comparador .ctrl select{width:100%}
+  /* Hallazgos: grid inline 1fr 1fr → 1 columna */
+  #hallazgosContent{grid-template-columns:1fr!important}
+
+  /* ── GENERAL: prevención de overflow horizontal ── */
+  body{overflow-x:hidden}
+  /* Tabla: override inline min-width:170px en input de búsqueda */
+  #tabla .ctrl input[type=text]{min-width:0!important;width:100%!important}
+  /* Mapa: ocultar timeline inferior (se superpone con el bottom sheet) */
+  #mapTimeline{display:none!important}
+  /* Intro: reducir paddings excesivos a 375px */
+  .intro-hero{padding:24px 16px 20px;gap:20px}
+  .intro-cta-row{padding:24px 16px 40px}
+  /* Intro-hero-right: quitar borde izquierdo en mobile (columna única) */
+  .intro-hero-right{border-left:none;padding-left:0;border-top:1px solid var(--border);padding-top:16px}
 }
 </style>
 </head>
