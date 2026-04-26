@@ -72,7 +72,7 @@ select:focus,input:focus{border-color:var(--text)}
 .mapa-right{display:flex;flex-direction:column;background:var(--bg);border-left:1px solid var(--border);overflow:hidden}
 .mapa-right-header{padding:14px 14px 0;flex-shrink:0}
 .mapa-right-charts{flex:1;overflow-y:auto;padding:10px 14px 14px;display:flex;flex-direction:column;gap:10px}
-.mapa-right-charts .cc canvas{max-height:130px}
+.mapa-right-charts .cc canvas{height:130px}
 .mapa-right-charts .cc{padding:12px 14px}
 /* Tablet (768–1024px): panel derecho más angosto, sidebar compacto */
 @media(min-width:768px) and (max-width:1024px){
@@ -101,7 +101,7 @@ select:focus,input:focus{border-color:var(--text)}
 .reg-top{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:0}
 @media(max-width:800px){.reg-top{grid-template-columns:1fr}}
 .reg-chart-box{display:flex;flex-direction:column}
-.reg-chart-box canvas{flex:1;min-height:0;max-height:280px}
+.reg-chart-box canvas{height:260px;min-height:0}
 .reg-chart-header{margin-bottom:4px}
 .reg-yr-pills{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
 #regTable{width:100%;border-collapse:collapse}
@@ -115,11 +115,15 @@ select:focus,input:focus{border-color:var(--text)}
 #regTable tbody td.grow-col{text-align:right;font-weight:700;border-left:2px solid var(--border);font-variant-numeric:tabular-nums}
 #regTable tbody td.reg-name{font-weight:700;display:flex;align-items:center;gap:8px}
 .reg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;display:inline-block}
-@media(max-width:700px){.g4{grid-template-columns:1fr}}
+@media(max-width:767px){.g4{grid-template-columns:1fr}}
 .cc{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px}
 .cc h3{font-family:'Fraunces',serif;font-size:13px;font-weight:600;margin-bottom:2px}
 .cc .cs{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:11px}
-.cc canvas{max-height:200px}
+/* maintainAspectRatio:false requiere altura explícita en el canvas */
+.cc canvas{height:200px}
+#chScatter1,#chScatter2,#chAnimScatter,#chTrayectoria{height:280px}
+#chDenEvol,#chScatter3,#chCmp,#chCmpRel{height:260px}
+#chConcExp,#chConcDen{height:220px}
 .cc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px}
 .cc-header h3{margin-bottom:0}
 .cc-flip-btn{background:none;border:none;cursor:pointer;padding:2px 3px;color:var(--muted);line-height:0;transition:color .2s;flex-shrink:0;margin-top:1px;border-radius:4px}
@@ -240,7 +244,7 @@ footer a:hover{color:var(--text)}
 #empty-state p{font-family:'Inter',sans-serif;font-size:13px;color:var(--muted);max-width:220px;line-height:1.6;}
 #charts-container{display:none;flex-direction:column;gap:10px;
   overflow-y:auto;padding:10px 14px 14px;}
-#charts-container .cc canvas{max-height:135px;}
+#charts-container .cc canvas{height:135px}
 #charts-container .cc{padding:13px 15px;}
 /* Charts right panel */
 .mapa-right-charts-wrap{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
@@ -455,6 +459,14 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
   .kpi-grid{grid-template-columns:1fr 1fr}
   .ctrl{gap:8px}
   .yr-row{padding:7px 10px}
+  /* Charts: apilar todas las columnas y reducir alturas en mobile */
+  .cg,.cg3{grid-template-columns:1fr!important}
+  .reg-top{grid-template-columns:1fr!important}
+  .cc canvas{height:160px}
+  #chScatter1,#chScatter2,#chAnimScatter,#chTrayectoria{height:200px}
+  #chDenEvol,#chScatter3,#chCmp,#chCmpRel{height:180px}
+  #chConcExp,#chConcDen{height:160px}
+  .reg-chart-box canvas{height:180px}
   /* Mapa: columna única, mapa ocupa 100% ancho */
   .mapa-layout{grid-template-columns:1fr!important;height:calc(100vh - 90px)!important}
   .mapa-right{display:none!important}
@@ -1164,6 +1176,9 @@ const REGIONS=[...new Set(LOCS.map(l=>DATA.localities[l].region_nombre))].sort()
 const RCOLORS=['#d4a017','#2d6a9f','#5a2db0','#9a2020','#1a6a3a','#8a1a50','#1a6060','#5a5a00','#4a1a8a'];
 
 
+// Helper para fuentes responsivas en Chart.js
+var IS_MOBILE=window.innerWidth<768;
+function cfs(n){return IS_MOBILE?Math.max(7,n-2):n;}
 let charts={},activeYrs=new Set([1980,1990,2000,2010,2020]),tblYr=2020,tblPage=0,sortCol='pob',resYr=2020;
 let currentRegInd='pob';
 let cmpSels=['CORDOBA','RIO CUARTO','VILLA MARIA'],selectedMun="CORDOBA";
@@ -1172,8 +1187,8 @@ let map,mapActiveYrs=new Set([2020]);
 const fmt=(n,d=0)=>n==null||isNaN(n)?'—':new Intl.NumberFormat('es-AR',{maximumFractionDigits:d}).format(n);
 const pct=(a,b)=>(!a||!b)?null:((b-a)/a*100).toFixed(1);
 function killChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
-const BS={x:{ticks:{color:'#888879',font:{family:'Space Mono',size:10}},grid:{color:'rgba(0,0,0,.05)'}},y:{ticks:{color:'#888879',font:{family:'Space Mono',size:10}},grid:{color:'rgba(0,0,0,.05)'}}};
-const BO={responsive:true,maintainAspectRatio:true,animation:{duration:300},plugins:{legend:{display:false}},scales:BS};
+const BS={x:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)}},grid:{color:'rgba(0,0,0,.05)'}},y:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)}},grid:{color:'rgba(0,0,0,.05)'}}};
+const BO={responsive:true,maintainAspectRatio:false,animation:{duration:300},plugins:{legend:{display:false}},scales:BS};
 
 var _secInited={};
 function showSec(id,btn){
@@ -1531,7 +1546,7 @@ function renderCharts(){
       }]},
       options:{
         responsive:true,
-        maintainAspectRatio:true,
+        maintainAspectRatio:false,
         parsing:false,
         animation:{duration:300},
         plugins:{
@@ -1644,13 +1659,13 @@ function buildRegional(){
     },
     options:{
       responsive: true,
-      maintainAspectRatio: true,
+      maintainAspectRatio: false,
       plugins:{
         legend:{
           position: 'bottom',
           labels:{
             color:'#888879',
-            font:{family:'Space Mono',size:9},
+            font:{family:'Space Mono',size:cfs(9)},
             padding: 8,
             boxWidth: 10,
             usePointStyle: true,
@@ -1666,8 +1681,8 @@ function buildRegional(){
         }
       },
       scales:{
-        x:{ ticks:{color:'#888879',font:{family:'Space Mono',size:9}}, grid:{color:'rgba(0,0,0,.05)'} },
-        y:{ ticks:{color:'#888879',font:{family:'Space Mono',size:9},callback:function(v){return fmt(v,ind==='den'?1:0);}}, grid:{color:'rgba(0,0,0,.05)'}, beginAtZero:true }
+        x:{ ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)}}, grid:{color:'rgba(0,0,0,.05)'} },
+        y:{ ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)},callback:function(v){return fmt(v,ind==='den'?1:0);}}, grid:{color:'rgba(0,0,0,.05)'}, beginAtZero:true }
       }
     }
   });
@@ -1700,7 +1715,7 @@ function updateRegBar(ind){
     options:{
       indexAxis: 'y',
       responsive: true,
-      maintainAspectRatio: true,
+      maintainAspectRatio: false,
       plugins:{
         legend:{display:false},
         tooltip:{callbacks:{
@@ -1708,8 +1723,8 @@ function updateRegBar(ind){
         }}
       },
       scales:{
-        x:{ ticks:{color:'#888879',font:{family:'Space Mono',size:9},callback:function(v){return fmt(v,ind==='den'?1:0);}}, grid:{color:'rgba(0,0,0,.05)'}, beginAtZero:true },
-        y:{ ticks:{color:'#888879',font:{family:'Space Mono',size:9}}, grid:{display:false} }
+        x:{ ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)},callback:function(v){return fmt(v,ind==='den'?1:0);}}, grid:{color:'rgba(0,0,0,.05)'}, beginAtZero:true },
+        y:{ ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)}}, grid:{display:false} }
       }
     }
   });
@@ -1994,11 +2009,11 @@ function renderCmpChart(){
     type:'line',
     data:{labels:YEARS,datasets:ds},
     options:{
-      responsive:true,maintainAspectRatio:true,
-      plugins:{legend:{labels:{color:'#888879',font:{family:'Space Mono',size:10}}}},
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#888879',font:{family:'Space Mono',size:cfs(10)}}}},
       scales:{
-        x:{ticks:{color:'#888879',font:{family:'Space Mono',size:10}},grid:{color:'rgba(0,0,0,.05)'}},
-        y:{ticks:{color:'#888879',font:{family:'Space Mono',size:10},callback:yFmt},grid:{color:'rgba(0,0,0,.05)'}}
+        x:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)}},grid:{color:'rgba(0,0,0,.05)'}},
+        y:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)},callback:yFmt},grid:{color:'rgba(0,0,0,.05)'}}
       }
     }
   });
@@ -2025,15 +2040,15 @@ function renderCmpChart(){
     type:'line',
     data:{labels:YEARS,datasets:dsRel},
     options:{
-      responsive:true,maintainAspectRatio:true,
+      responsive:true,maintainAspectRatio:false,
       plugins:{
-        legend:{labels:{color:'#888879',font:{family:'Space Mono',size:10}}},
+        legend:{labels:{color:'#888879',font:{family:'Space Mono',size:cfs(10)}}},
         tooltip:{callbacks:{label:function(item){return ' '+item.dataset.label+': '+(item.raw>=0?'+':'')+item.raw+'%';}}}
       },
       scales:{
-        x:{ticks:{color:'#888879',font:{family:'Space Mono',size:10}},grid:{color:'rgba(0,0,0,.05)'}},
+        x:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)}},grid:{color:'rgba(0,0,0,.05)'}},
         y:{
-          ticks:{color:'#888879',font:{family:'Space Mono',size:10},callback:function(v){return (v>=0?'+':'')+v+'%';}},
+          ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return (v>=0?'+':'')+v+'%';}},
           grid:{color:'rgba(0,0,0,.05)'},
           afterDataLimits:function(scale){scale.max=Math.max(scale.max,10);}
         }
@@ -2063,14 +2078,14 @@ function buildConclusiones(){
          tension:.35,pointRadius:6,pointBackgroundColor:'#1ec3e6',borderWidth:2.5,fill:true}
       ]
     },
-    options:{responsive:true,maintainAspectRatio:true,
-      plugins:{legend:{labels:{color:'#888879',font:{family:'Space Mono',size:10}}},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#888879',font:{family:'Space Mono',size:cfs(10)}}},
         tooltip:{callbacks:{label:function(i){return ' '+i.dataset.label+': '+i.raw+' (base 100)';}}},
         annotation:{annotations:{line100:{type:'line',yMin:100,yMax:100,borderColor:'rgba(0,0,0,.2)',borderWidth:1,borderDash:[4,4]}}}
       },
       scales:{
-        x:{ticks:{color:'#888879',font:{family:'Space Mono',size:9}},grid:{color:'rgba(0,0,0,.05)'}},
-        y:{ticks:{color:'#888879',font:{family:'Space Mono',size:9},callback:function(v){return v;}},
+        x:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)}},grid:{color:'rgba(0,0,0,.05)'}},
+        y:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)},callback:function(v){return v;}},
            grid:{color:'rgba(0,0,0,.05)'},beginAtZero:false}
       }
     }
@@ -2089,13 +2104,13 @@ function buildConclusiones(){
         borderWidth:2,borderRadius:5
       }]
     },
-    options:{responsive:true,maintainAspectRatio:true,
+    options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},
         tooltip:{callbacks:{label:function(i){return ' '+fmt(i.raw,1)+' BU medio';}}}
       },
       scales:{
-        x:{ticks:{color:'#888879',font:{family:'Space Mono',size:9}},grid:{display:false}},
-        y:{ticks:{color:'#888879',font:{family:'Space Mono',size:9},callback:function(v){return fmt(v,0);}},
+        x:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)}},grid:{display:false}},
+        y:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)},callback:function(v){return fmt(v,0);}},
            grid:{color:'rgba(0,0,0,.05)'},beginAtZero:false}
       }
     }
@@ -2138,8 +2153,8 @@ function buildAnalisis(){
         borderColor:getCol(rn),borderWidth:1,pointRadius:4,pointHoverRadius:7};
     });
   }
-  var sb={responsive:true,maintainAspectRatio:true,
-    plugins:{legend:{position:'bottom',labels:{color:'var(--muted)',font:{family:'Space Mono',size:10},padding:6,boxWidth:8,usePointStyle:true}}}};
+  var sb={responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)},padding:6,boxWidth:8,usePointStyle:true}}}};
 
   killChart('sc1');
   var g1=makeGroups(function(l){var d=DATA.localities[l].data[aYr];return(d&&d.pix&&d.den)?{x:d.pix,y:d.den}:null;});
@@ -2150,8 +2165,8 @@ function buildAnalisis(){
       label:function(i){return[' Píxeles: '+fmt(i.raw.x),' Densidad: '+fmt(i.raw.y,1)+' hab/km²'];}
     }}}),
     scales:{
-      x:{title:{display:true,text:'Píxeles construidos',color:'var(--muted)',font:{family:'Space Mono',size:10}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:10},callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}},
-      y:{title:{display:true,text:'Densidad media (hab/km²)',color:'var(--muted)',font:{family:'Space Mono',size:10}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:10},callback:function(v){return fmt(v,1);}},grid:{color:'rgba(0,0,0,.05)'}}
+      x:{title:{display:true,text:'Píxeles construidos',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}},
+      y:{title:{display:true,text:'Densidad media (hab/km²)',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return fmt(v,1);}},grid:{color:'rgba(0,0,0,.05)'}}
     }})
   });
 
@@ -2174,8 +2189,8 @@ function buildAnalisis(){
       tooltip:{callbacks:{title:function(i){return i[0].raw.label||'';},label:function(i){if(!i.raw.label) return'';return[' Crec. pob.: '+(i.raw.x>=0?'+':'')+i.raw.x.toFixed(1)+'%',' Crec. sup.: '+(i.raw.y>=0?'+':'')+i.raw.y.toFixed(1)+'%'];}}}
     }),
     scales:{
-      x:{title:{display:true,text:'Crecimiento poblacional (%)',color:'var(--muted)',font:{family:'Space Mono',size:10}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:10},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}},
-      y:{title:{display:true,text:'Crecimiento superficial (%)',color:'var(--muted)',font:{family:'Space Mono',size:10}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:10},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}}
+      x:{title:{display:true,text:'Crecimiento poblacional (%)',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}},
+      y:{title:{display:true,text:'Crecimiento superficial (%)',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}}
     }})
   });
 
@@ -2188,7 +2203,7 @@ function buildAnalisis(){
     options:Object.assign({},sb,{plugins:Object.assign({},sb.plugins,{tooltip:{callbacks:{label:function(i){return' '+i.dataset.label+': '+fmt(i.raw,1)+' hab/km²';}}}}),
     scales:{
       x:{ticks:{color:'var(--muted)',font:{family:'Space Mono',size:11}},grid:{color:'rgba(0,0,0,.05)'}},
-      y:{title:{display:true,text:'Densidad media (hab/km²)',color:'var(--muted)',font:{family:'Space Mono',size:10}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:10},callback:function(v){return fmt(v,1);}},grid:{color:'rgba(0,0,0,.05)'}}
+      y:{title:{display:true,text:'Densidad media (hab/km²)',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return fmt(v,1);}},grid:{color:'rgba(0,0,0,.05)'}}
     }})
   });
 
@@ -2211,8 +2226,8 @@ function buildAnalisis(){
       tooltip:{callbacks:{title:function(i){return i[0].raw.label||'';},label:function(i){if(!i.raw.label) return'';return[' Crec. sup.: '+(i.raw.x>=0?'+':'')+i.raw.x.toFixed(1)+'%',' Crec. núcleos: '+(i.raw.y>=0?'+':'')+i.raw.y.toFixed(1)+'%'];}}}
     }),
     scales:{
-      x:{title:{display:true,text:'Crecimiento superficial (%)',color:'var(--muted)',font:{family:'Space Mono',size:10}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:10},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}},
-      y:{title:{display:true,text:'Crecimiento de núcleos (%)',color:'var(--muted)',font:{family:'Space Mono',size:10}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:10},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}}
+      x:{title:{display:true,text:'Crecimiento superficial (%)',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}},
+      y:{title:{display:true,text:'Crecimiento de núcleos (%)',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}}
     }})
   });
   // Actualizar scatter animado con el año actual de análisis
@@ -2272,20 +2287,20 @@ function buildAnimScatter(yr){
   });
   charts['animSc']=new Chart(document.getElementById('chAnimScatter').getContext('2d'),{
     type:'scatter',data:{datasets:datasets},
-    options:{responsive:true,maintainAspectRatio:true,
+    options:{responsive:true,maintainAspectRatio:false,
       animation:{duration:400},
       plugins:{
-        legend:{position:'bottom',labels:{color:'var(--muted)',font:{family:'Space Mono',size:9},padding:5,boxWidth:8,usePointStyle:true}},
+        legend:{position:'bottom',labels:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(9)},padding:5,boxWidth:8,usePointStyle:true}},
         tooltip:{callbacks:{
           title:function(i){return i[0].raw.label;},
           label:function(i){return[' Píxeles: '+fmt(i.raw.x),' Pob: '+fmt(i.raw.y)];}
         }}
       },
       scales:{
-        x:{title:{display:true,text:'Píxeles construidos',color:'var(--muted)',font:{family:'Space Mono',size:10}},
-          ticks:{color:'var(--muted)',font:{family:'Space Mono',size:9},callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}},
-        y:{title:{display:true,text:'Población',color:'var(--muted)',font:{family:'Space Mono',size:10}},
-          ticks:{color:'var(--muted)',font:{family:'Space Mono',size:9},callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}}
+        x:{title:{display:true,text:'Píxeles construidos',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},
+          ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(9)},callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}},
+        y:{title:{display:true,text:'Población',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},
+          ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(9)},callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}}
       }
     }
   });
@@ -2315,7 +2330,7 @@ function buildTrayectoria(){
   // Agregar etiquetas de año como anotaciones via puntos extra
   charts['tray']=new Chart(document.getElementById('chTrayectoria').getContext('2d'),{
     type:'scatter',data:{datasets:ds},
-    options:{responsive:true,maintainAspectRatio:true,
+    options:{responsive:true,maintainAspectRatio:false,
       plugins:{
         legend:{display:false},
         tooltip:{callbacks:{
@@ -2324,10 +2339,10 @@ function buildTrayectoria(){
         }}
       },
       scales:{
-        x:{title:{display:true,text:'Superficie (píxeles)',color:'var(--muted)',font:{family:'Space Mono',size:10}},
-          ticks:{color:'var(--muted)',font:{family:'Space Mono',size:9},callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}},
-        y:{title:{display:true,text:'Población',color:'var(--muted)',font:{family:'Space Mono',size:10}},
-          ticks:{color:'var(--muted)',font:{family:'Space Mono',size:9},callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}}
+        x:{title:{display:true,text:'Superficie (píxeles)',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},
+          ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(9)},callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}},
+        y:{title:{display:true,text:'Población',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},
+          ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(9)},callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}}
       }
     }
   });
