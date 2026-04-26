@@ -459,6 +459,26 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
   .kpi-grid{grid-template-columns:1fr 1fr}
   .ctrl{gap:8px}
   .yr-row{padding:7px 10px}
+  /* Tabla: controles apilados verticalmente */
+  #tabla .ctrl{flex-direction:column;align-items:stretch;gap:8px}
+  #tabla .ctrl .ctrl-g{width:100%}
+  #tabla .ctrl select,#tabla .ctrl input[type=text]{width:100%;box-sizing:border-box}
+  /* Scroll horizontal: el div interno ya tiene overflow-x:auto;
+     asegurar touch-scroll fluido y padding compacto */
+  #tabla .tc>div{-webkit-overflow-scrolling:touch}
+  #tabla thead th,#tabla tbody td{padding:6px 8px;font-size:11px}
+  /* Modo normal: visibles = Localidad(2), Región(4), Población(5), Patrón(11)
+     Ocultos: #(1), Dpto(3), Píxeles(6), Dens(7), Núcleos(8), Crec.Pob%(9), Crec.Sup%(10), Mapa(12) */
+  #mainTable.tbl-normal th:nth-child(1),#mainTable.tbl-normal td:nth-child(1){display:none}
+  #mainTable.tbl-normal th:nth-child(3),#mainTable.tbl-normal td:nth-child(3){display:none}
+  #mainTable.tbl-normal th:nth-child(6),#mainTable.tbl-normal td:nth-child(6){display:none}
+  #mainTable.tbl-normal th:nth-child(7),#mainTable.tbl-normal td:nth-child(7){display:none}
+  #mainTable.tbl-normal th:nth-child(8),#mainTable.tbl-normal td:nth-child(8){display:none}
+  #mainTable.tbl-normal th:nth-child(9),#mainTable.tbl-normal td:nth-child(9){display:none}
+  #mainTable.tbl-normal th:nth-child(10),#mainTable.tbl-normal td:nth-child(10){display:none}
+  #mainTable.tbl-normal th:nth-child(12),#mainTable.tbl-normal td:nth-child(12){display:none}
+  /* Modo evolutivo: ocultar # y dejar scroll horizontal para las columnas año */
+  #mainTable.tbl-evo th:nth-child(1),#mainTable.tbl-evo td:nth-child(1){display:none}
   /* Charts: apilar todas las columnas y reducir alturas en mobile */
   .cg,.cg3{grid-template-columns:1fr!important}
   .reg-top{grid-template-columns:1fr!important}
@@ -1793,6 +1813,8 @@ function renderTbl(){
   const tb=document.getElementById('tblBody');tb.innerHTML='';
   const yc=YC[tblYr];
   var thead=document.getElementById('mainTHead');
+  // Clase en <table> para ocultar columnas en mobile vía CSS
+  document.getElementById('mainTable').className=tblModo==='evo'?'tbl-evo':'tbl-normal';
   if(tblModo==='evo'){
     if(thead) thead.innerHTML='<tr><th>#</th><th>Localidad</th><th>Región</th><th>Patrón</th>'+
       [1980,1990,2000,2010,2020].map(function(y){return '<th style="border-top:3px solid '+YC[y]+';text-align:right">Pob '+y+'</th><th style="border-top:3px solid '+YC[y]+';text-align:right">Pix '+y+'</th>';}).join('')+'</tr>';
