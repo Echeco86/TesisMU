@@ -595,7 +595,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
       Mgtr. Lic. Juan Manuel Echecolanea &nbsp;·&nbsp;
       <a href="mailto:echecolaneajuan@gmail.com">echecolaneajuan@gmail.com</a>
       &nbsp;·&nbsp;
-      <a href="http://hdl.handle.net/11086/560262" target="_blank">Repositorio UNC</a>
+      <a href="http://hdl.handle.net/11086/560262" target="_blank">Tesis publicada - Repositorio UNC</a>
     </div>
   </div>
 
@@ -627,7 +627,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
     <hr class="cv-hr">
     <a href="http://hdl.handle.net/11086/560262" target="_blank" class="cv-link" style="margin-bottom:10px;display:inline-flex">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-      Repositorio institucional UNC
+      Tesis publicada - Repositorio UNC
     </a>
     <a href="https://www.linkedin.com/in/juan-manuel-echecolanea-b23a5566/" target="_blank" class="cv-link">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
@@ -663,7 +663,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
     <button onclick="showSec('analisis',this)" aria-label="Análisis Exploratorio por localidad">Análisis Exploratorio</button>
     <button onclick="showSec('comparador',this)" aria-label="Comparador de localidades y regiones">Comparador</button>
     <button onclick="showSec('tabla',this)" aria-label="Tabla de datos de 427 localidades">Tabla de Datos</button>
-    <button onclick="showSec('teorico',this)" aria-label="Marco Teórico">Marco Teórico</button>
+    <button onclick="showSec('teorico',this)" aria-label="Marco Conceptual y Metodológico">Marco Conceptual y Metodológico</button>
     <button onclick="showSec('conclusiones',this)">Conclusiones</button>
   </div>
 </nav>
@@ -973,6 +973,10 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
         <button class="pill on" onclick="setAYr(2020,this)" style="border-color:#faa523;color:#7a4a00">2020</button>
       </div>
     </div>
+    <div class="ctrl-g">
+      <span class="ctrl-lbl">Escala ejes</span>
+      <button id="aLogBtn" class="pill on" onclick="toggleALog(this)" style="border-color:var(--text);font-weight:700" title="Alterna entre escala logarítmica y lineal en los scatter de superficie/población">Logarítmica</button>
+    </div>
   </div>
   <div class="cg" style="margin-bottom:14px">
     <div class="cc"><h3>Expansión vs. Densidad</h3><div class="cs">superficie construida · densidad media · año seleccionado</div><canvas id="chScatter1" style="max-height:300px"></canvas></div>
@@ -981,6 +985,19 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
   <div class="cg">
     <div class="cc"><h3>Evolución de la densidad media por región</h3><div class="cs">1980–2020 · curva descendente = expansión extensiva</div><canvas id="chDenEvol" style="max-height:280px"></canvas></div>
     <div class="cc"><h3>Fragmentación: núcleos vs. superficie</h3><div class="cs">crecimiento de núcleos vs. crecimiento de píxeles 1980→año</div><canvas id="chScatter3" style="max-height:280px"></canvas></div>
+  </div>
+  <!-- Análisis derivados: patrones de crecimiento y ranking de expansión -->
+  <div class="cg" style="margin-top:14px">
+    <div class="cc">
+      <h3>Distribución de patrones de crecimiento</h3>
+      <div class="cs" id="csPatrones">clasificación 1980→2020 · todas las localidades</div>
+      <canvas id="chPatrones" style="max-height:260px"></canvas>
+    </div>
+    <div class="cc">
+      <h3>Top 10 · Expansión superficial</h3>
+      <div class="cs" id="csTop10">% de crecimiento de píxeles · 1980→2020</div>
+      <canvas id="chTop10" style="max-height:260px"></canvas>
+    </div>
   </div>
   <!-- Mejora #8: Scatter animado + #9: Trayectoria individual -->
   <div class="cg" style="margin-top:14px">
@@ -1117,6 +1134,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
     <p><strong>Datos poblacionales:</strong> Censos Nacionales de Población, Hogares y Vivienda del INDEC correspondientes a los años 1980, 1991, 2001, 2010 y 2022. La investigación trabaja con 427 municipios y comunas de la Provincia de Córdoba.</p>
     <p><strong>Datos de expansión urbana:</strong> Capa Global de Asentamientos Humanos (GHSL) — específicamente la base <em>GHS-BUILT-S R2022A</em>, derivada de imágenes satelitales Sentinel-2 y Landsat, con resolución de 100 m × 100 m por píxel. Los cuadrantes R13-C13 y R14-C13 fueron procesados en QGIS 3.22.5 mediante el geoproceso "Poligonizar", recortando con el límite provincial y eliminando píxeles con valor BU &lt; 10.</p>
     <p><strong>Clasificación de densidad:</strong> Los valores BU (superficie construida por píxel) fueron clasificados en 5 categorías tomando como referencia los cortes naturales del año 2010 (año equidistante a la serie): <span class="stat-highlight">Muy Baja</span> (0–368), <span class="stat-highlight">Baja</span> (368–1.309), <span class="stat-highlight">Media</span> (1.309–2.634), <span class="stat-highlight">Alta</span> (2.634–4.074), <span class="stat-highlight">Muy Alta</span> (4.074–10.000).</p>
+    <p><strong>Indicadores derivados:</strong> A partir de las series censales y de superficie construida se calculan: la <em>tasa de crecimiento anual compuesta</em> por década (población y superficie); la <em>clasificación del patrón de crecimiento</em> de cada localidad (compacta, sprawl moderado, sprawl acelerado, dispersión intensa o en declive) según la relación entre crecimiento superficial y poblacional 1980→2020; el <em>índice de fragmentación</em> (núcleos por cada 100 píxeles construidos); y el <em>LCRPGR</em> (Land Consumption Rate / Population Growth Rate), indicador <span class="stat-highlight">ODS 11.3.1</span> de ONU-Hábitat que mide la eficiencia del consumo de suelo: valores mayores a 1 indican que el suelo urbano se expande más rápido de lo que crece la población.</p>
     <table class="method-table">
       <thead><tr><th>Corte temporal</th><th>Censo poblacional</th><th>Capa GHSL</th><th>Descripción del período</th></tr></thead>
       <tbody>
@@ -1150,6 +1168,19 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
       <h3>Densidad media provincial</h3>
       <div class="cs">valor BU medio por píxel · 1980–2020</div>
       <canvas id="chConcDen" style="max-height:240px"></canvas>
+    </div>
+  </div>
+
+  <div class="cg" style="margin-bottom:14px">
+    <div class="cc">
+      <h3>Tasa de crecimiento anual por década</h3>
+      <div class="cs">tasa anual compuesta (%) · población vs. superficie construida · provincia total</div>
+      <canvas id="chConcTasas" style="max-height:240px"></canvas>
+    </div>
+    <div class="cc">
+      <h3>Eficiencia del uso del suelo · LCRPGR <span style="font-size:9px;color:var(--muted);font-weight:400">ODS 11.3.1</span></h3>
+      <div class="cs">ratio consumo de suelo / crecimiento poblacional · 1980–2020 · &gt;1 = el suelo se consume más rápido de lo que crece la población</div>
+      <canvas id="chConcLCR" style="max-height:240px"></canvas>
     </div>
   </div>
 
@@ -1542,7 +1573,7 @@ function flipCard(btn){
 
 function goToLocalidad(){
   if(!selectedMun) return;
-  showSec('analisis', document.querySelectorAll('nav button')[2]);
+  showSec('analisis', document.querySelector('.nav-items button[onclick*="analisis"]'));
   var rf=document.getElementById('aRegFilt');
   if(rf && DATA.localities[selectedMun]) rf.value=DATA.localities[selectedMun].region_nombre;
   buildAnalisis();
@@ -2143,13 +2174,17 @@ function buildConclusiones(){
         {label:'Población',
          data: YEARS.map(function(y){return Math.round(t[y].pob/pob80*100);}),
          borderColor:'#1ec3e6',backgroundColor:'rgba(30,195,230,.08)',
-         tension:.35,pointRadius:6,pointBackgroundColor:'#1ec3e6',borderWidth:2.5,fill:true}
+         tension:.35,pointRadius:6,pointBackgroundColor:'#1ec3e6',borderWidth:2.5,fill:true},
+        // Línea de referencia base 100 (el plugin annotation no está cargado: se dibuja como dataset)
+        {label:'_ref',
+         data: YEARS.map(function(){return 100;}),
+         borderColor:'rgba(0,0,0,.25)',borderDash:[4,4],borderWidth:1,
+         pointRadius:0,fill:false,tension:0}
       ]
     },
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{labels:{color:'#888879',font:{family:'Space Mono',size:cfs(10)}}},
-        tooltip:{callbacks:{label:function(i){return ' '+i.dataset.label+': '+i.raw+' (base 100)';}}},
-        annotation:{annotations:{line100:{type:'line',yMin:100,yMax:100,borderColor:'rgba(0,0,0,.2)',borderWidth:1,borderDash:[4,4]}}}
+      plugins:{legend:{labels:{color:'#888879',font:{family:'Space Mono',size:cfs(10)},filter:function(i){return i.text!=='_ref';}}},
+        tooltip:{filter:function(i){return i.dataset.label!=='_ref';},callbacks:{label:function(i){return ' '+i.dataset.label+': '+i.raw+' (base 100)';}}}
       },
       scales:{
         x:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)}},grid:{color:'rgba(0,0,0,.05)'}},
@@ -2183,11 +2218,102 @@ function buildConclusiones(){
       }
     }
   });
+  buildConcTasas();
+  buildConcLCR();
+}
+
+// ── Tasa de crecimiento anual compuesta por década (provincia total) ──
+function buildConcTasas(){
+  var cv=document.getElementById('chConcTasas'); if(!cv) return;
+  killChart('concTasas');
+  var t=DATA.totals;
+  var decades=[[1980,1990],[1990,2000],[2000,2010],[2010,2020]];
+  function cagr(v1,v2){return (Math.pow(v2/v1,1/10)-1)*100;}
+  charts['concTasas']=new Chart(cv.getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:decades.map(function(d){return d[0]+'–'+d[1];}),
+      datasets:[
+        {label:'Población',
+         data:decades.map(function(d){return parseFloat(cagr(t[d[0]].pob,t[d[1]].pob).toFixed(2));}),
+         backgroundColor:'rgba(30,195,230,.75)',borderColor:'#1ec3e6',borderWidth:1.5,borderRadius:4},
+        {label:'Superficie construida',
+         data:decades.map(function(d){return parseFloat(cagr(t[d[0]].pix,t[d[1]].pix).toFixed(2));}),
+         backgroundColor:'rgba(227,57,67,.75)',borderColor:'#e33943',borderWidth:1.5,borderRadius:4}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#888879',font:{family:'Space Mono',size:cfs(10)}}},
+        tooltip:{callbacks:{label:function(i){return ' '+i.dataset.label+': '+i.raw.toFixed(2)+'% anual';}}}},
+      scales:{
+        x:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)}},grid:{display:false}},
+        y:{title:{display:true,text:'Tasa anual (%)',color:'#888879',font:{family:'Space Mono',size:cfs(9)}},
+           ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)},callback:function(v){return v+'%';}},
+           grid:{color:'rgba(0,0,0,.05)'},beginAtZero:true}
+      }
+    }
+  });
+}
+
+// ── LCRPGR por región (ODS 11.3.1, ONU-Hábitat) ──
+// LCR = ln(sup_2020/sup_1980)/40 · PGR = ln(pob_2020/pob_1980)/40 · LCRPGR = LCR/PGR
+function buildConcLCR(){
+  var cv=document.getElementById('chConcLCR'); if(!cv) return;
+  killChart('concLCR');
+  var rows=[];
+  Object.keys(DATA.regions).forEach(function(rn){
+    var r80=DATA.regions[rn][1980],r20=DATA.regions[rn][2020];
+    if(!r80||!r20||!r80.pob||!r80.pix||!r20.pob||!r20.pix) return;
+    var lcr=Math.log(r20.pix/r80.pix)/40;
+    var pgr=Math.log(r20.pob/r80.pob)/40;
+    if(pgr<=0) return; // el indicador no está definido con población decreciente
+    rows.push({rn:rn,v:lcr/pgr,lcr:lcr*100,pgr:pgr*100});
+  });
+  rows.sort(function(a,b){return b.v-a.v;});
+  charts['concLCR']=new Chart(cv.getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:rows.map(function(r){return r.rn.replace('Región ','');}),
+      datasets:[
+        {type:'line',label:'Equilibrio (LCRPGR = 1)',
+         data:rows.map(function(){return 1;}),
+         borderColor:'rgba(0,0,0,.4)',borderDash:[5,4],borderWidth:1.5,pointRadius:0,fill:false},
+        {label:'LCRPGR 1980–2020',
+         data:rows.map(function(r){return parseFloat(r.v.toFixed(2));}),
+         backgroundColor:rows.map(function(r){return (RCOLORS_MAP[r.rn]||'#888')+'cc';}),
+         borderColor:rows.map(function(r){return RCOLORS_MAP[r.rn]||'#888';}),
+         borderWidth:1.5,borderRadius:4}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#888879',font:{family:'Space Mono',size:cfs(9)},boxWidth:14}},
+        tooltip:{callbacks:{label:function(i){
+          if(i.dataset.type==='line') return ' Equilibrio: expansión proporcional al crecimiento poblacional';
+          var r=rows[i.dataIndex];
+          return [' LCRPGR: '+r.v.toFixed(2),
+                  ' Tasa consumo de suelo: '+r.lcr.toFixed(2)+'% anual',
+                  ' Tasa crec. poblacional: '+r.pgr.toFixed(2)+'% anual'];}}}},
+      scales:{
+        x:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(8)},maxRotation:45,minRotation:30},grid:{display:false}},
+        y:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)}},grid:{color:'rgba(0,0,0,.05)'},beginAtZero:true}
+      }
+    }
+  });
 }
 
 
 // ══ ANÁLISIS EXPLORATORIO ══
 var aYr = 2020;
+var aLog = true; // escala logarítmica en scatters de superficie/población
+
+function toggleALog(btn){
+  aLog = !aLog;
+  if(btn){
+    btn.classList.toggle('on', aLog);
+    btn.textContent = aLog ? 'Logarítmica' : 'Lineal';
+  }
+  buildAnalisis();
+}
 
 function setAYr(yr, btn){
   aYr = yr;
@@ -2222,7 +2348,20 @@ function buildAnalisis(){
     });
   }
   var sb={responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{position:'bottom',labels:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)},padding:6,boxWidth:8,usePointStyle:true}}}};
+    plugins:{legend:{position:'bottom',labels:{color:'#888879',font:{family:'Space Mono',size:cfs(10)},padding:6,boxWidth:8,usePointStyle:true}}}};
+
+  // Actualizar subtítulos con el año de corte activo
+  (function(){
+    var el;
+    el=document.getElementById('chScatter1');
+    if(el){el=el.closest('.cc').querySelector('.cs');if(el) el.textContent='superficie construida · densidad media · '+aYr;}
+    el=document.getElementById('chScatter2');
+    if(el){el=el.closest('.cc').querySelector('.cs');if(el) el.textContent=(aYr==1980?'comparación vs 1980 · seleccioná otro año para ver diferencias':'variación % respecto a 1980 · 1980 → '+aYr+' · diagonal = crecimiento proporcional');}
+    el=document.getElementById('chDenEvol');
+    if(el){el=el.closest('.cc').querySelector('.cs');if(el) el.textContent='1980 – '+aYr+' · curva descendente = expansión extensiva';}
+    el=document.getElementById('chScatter3');
+    if(el){el=el.closest('.cc').querySelector('.cs');if(el) el.textContent=(aYr==1980?'comparación vs 1980 · seleccioná otro año para ver diferencias':'crecimiento de núcleos vs. crecimiento de píxeles 1980→'+aYr);}
+  })();
 
   killChart('sc1');
   var g1=makeGroups(function(l){var d=DATA.localities[l].data[aYr];return(d&&d.pix&&d.den)?{x:d.pix,y:d.den}:null;});
@@ -2233,8 +2372,8 @@ function buildAnalisis(){
       label:function(i){return[' Píxeles: '+fmt(i.raw.x),' Densidad: '+fmt(i.raw.y,1)+' hab/km²'];}
     }}}),
     scales:{
-      x:{title:{display:true,text:'Píxeles construidos',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}},
-      y:{title:{display:true,text:'Densidad media (hab/km²)',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return fmt(v,1);}},grid:{color:'rgba(0,0,0,.05)'}}
+      x:{type:aLog?'logarithmic':'linear',title:{display:true,text:'Píxeles construidos'+(aLog?' (escala log)':''),color:'#888879',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)},maxTicksLimit:7,callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}},
+      y:{title:{display:true,text:'Densidad media (hab/km²)',color:'#888879',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return fmt(v,1);}},grid:{color:'rgba(0,0,0,.05)'}}
     }})
   });
 
@@ -2257,21 +2396,22 @@ function buildAnalisis(){
       tooltip:{callbacks:{title:function(i){return i[0].raw.label||'';},label:function(i){if(!i.raw.label) return'';return[' Crec. pob.: '+(i.raw.x>=0?'+':'')+i.raw.x.toFixed(1)+'%',' Crec. sup.: '+(i.raw.y>=0?'+':'')+i.raw.y.toFixed(1)+'%'];}}}
     }),
     scales:{
-      x:{title:{display:true,text:'Crecimiento poblacional (%)',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}},
-      y:{title:{display:true,text:'Crecimiento superficial (%)',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}}
+      x:{title:{display:true,text:'Crecimiento poblacional (%)',color:'#888879',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}},
+      y:{title:{display:true,text:'Crecimiento superficial (%)',color:'#888879',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}}
     }})
   });
 
   killChart('denEvol');
+  var denYears=YEARS.filter(function(y){return y<=aYr;});
   charts['denEvol']=new Chart(document.getElementById('chDenEvol').getContext('2d'),{
-    type:'line',data:{labels:YEARS,datasets:Object.keys(DATA.regions).map(function(rn){
-      return{label:rn,data:YEARS.map(function(y){return DATA.regions[rn]&&DATA.regions[rn][y]?DATA.regions[rn][y].den:null;}),
+    type:'line',data:{labels:denYears,datasets:Object.keys(DATA.regions).map(function(rn){
+      return{label:rn,data:denYears.map(function(y){return DATA.regions[rn]&&DATA.regions[rn][y]?DATA.regions[rn][y].den:null;}),
         borderColor:getCol(rn),backgroundColor:'transparent',tension:.35,pointRadius:4,pointBackgroundColor:getCol(rn),borderWidth:2,fill:false};
     })},
     options:Object.assign({},sb,{plugins:Object.assign({},sb.plugins,{tooltip:{callbacks:{label:function(i){return' '+i.dataset.label+': '+fmt(i.raw,1)+' hab/km²';}}}}),
     scales:{
-      x:{ticks:{color:'var(--muted)',font:{family:'Space Mono',size:11}},grid:{color:'rgba(0,0,0,.05)'}},
-      y:{title:{display:true,text:'Densidad media (hab/km²)',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return fmt(v,1);}},grid:{color:'rgba(0,0,0,.05)'}}
+      x:{ticks:{color:'#888879',font:{family:'Space Mono',size:11}},grid:{color:'rgba(0,0,0,.05)'}},
+      y:{title:{display:true,text:'Densidad media (hab/km²)',color:'#888879',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return fmt(v,1);}},grid:{color:'rgba(0,0,0,.05)'}}
     }})
   });
 
@@ -2294,12 +2434,97 @@ function buildAnalisis(){
       tooltip:{callbacks:{title:function(i){return i[0].raw.label||'';},label:function(i){if(!i.raw.label) return'';return[' Crec. sup.: '+(i.raw.x>=0?'+':'')+i.raw.x.toFixed(1)+'%',' Crec. núcleos: '+(i.raw.y>=0?'+':'')+i.raw.y.toFixed(1)+'%'];}}}
     }),
     scales:{
-      x:{title:{display:true,text:'Crecimiento superficial (%)',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}},
-      y:{title:{display:true,text:'Crecimiento de núcleos (%)',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}}
+      x:{title:{display:true,text:'Crecimiento superficial (%)',color:'#888879',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}},
+      y:{title:{display:true,text:'Crecimiento de núcleos (%)',color:'#888879',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}}
     }})
   });
-  // Actualizar scatter animado con el año actual de análisis
-  if(document.getElementById('chAnimScatter')) buildAnimScatter(aYr);
+  // Actualizar scatter animado con el año actual de análisis (sincronizando slider y etiqueta)
+  if(document.getElementById('chAnimScatter')){
+    var yrIdx=YEARS_ARR.indexOf(aYr);
+    if(yrIdx>=0){
+      var sl=document.getElementById('animSlider'),yl=document.getElementById('animYrLabel');
+      if(sl) sl.value=yrIdx;
+      if(yl) yl.textContent=aYr;
+      animYrIdx=yrIdx;
+    }
+    buildAnimScatter(aYr);
+  }
+  buildPatrones();
+  buildTop10();
+}
+
+// ── Distribución de patrones de crecimiento (1980→2020) ──
+var PATRON_ORDER=['Compacta','Sprawl moderado','Sprawl acelerado','Dispersión intensa','En declive'];
+var PATRON_COLORS={'Compacta':'#1a7a1a','Sprawl moderado':'#a07010','Sprawl acelerado':'#c03010','Dispersión intensa':'#7a0010','En declive':'#7a1a1a'};
+
+function buildPatrones(){
+  var cv=document.getElementById('chPatrones'); if(!cv) return;
+  killChart('patrones');
+  var regFilter=document.getElementById('aRegFilt')?document.getElementById('aRegFilt').value:'';
+  var counts={},total=0;
+  LOCS.forEach(function(l){
+    if(regFilter&&DATA.localities[l].region_nombre!==regFilter) return;
+    var p=clasificarPatron(l); if(!p) return;
+    counts[p.label]=(counts[p.label]||0)+1; total++;
+  });
+  var cs=document.getElementById('csPatrones');
+  if(cs) cs.textContent='clasificación 1980→2020 · '+total+' localidades'+(regFilter?' · '+regFilter:'');
+  var labels=PATRON_ORDER.filter(function(o){return counts[o];});
+  charts['patrones']=new Chart(cv.getContext('2d'),{
+    type:'bar',
+    data:{labels:labels,datasets:[{
+      data:labels.map(function(o){return counts[o];}),
+      backgroundColor:labels.map(function(o){return PATRON_COLORS[o]+'cc';}),
+      borderColor:labels.map(function(o){return PATRON_COLORS[o];}),
+      borderWidth:1.5,borderRadius:5}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:function(i){return ' '+fmt(i.raw)+' localidades ('+(i.raw/total*100).toFixed(1)+'%)';}}}},
+      scales:{
+        x:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return Number.isInteger(v)?fmt(v):'';}},grid:{color:'rgba(0,0,0,.05)'},beginAtZero:true},
+        y:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)}},grid:{display:false}}
+      }
+    }
+  });
+}
+
+// ── Top 10 localidades por expansión superficial ──
+function buildTop10(){
+  var cv=document.getElementById('chTop10'); if(!cv) return;
+  killChart('top10');
+  var regFilter=document.getElementById('aRegFilt')?document.getElementById('aRegFilt').value:'';
+  var yrEnd=(aYr==1980)?2020:aYr;
+  var rows=[];
+  LOCS.forEach(function(l){
+    var ld=DATA.localities[l];
+    if(regFilter&&ld.region_nombre!==regFilter) return;
+    var d80=ld.data[1980],dY=ld.data[yrEnd];
+    // base mínima de 30 píxeles en 1980 para evitar artefactos de base pequeña
+    if(!d80||!dY||!d80.pix||d80.pix<30||!dY.pix) return;
+    rows.push({l:l,g:(dY.pix-d80.pix)/d80.pix*100,rn:ld.region_nombre,p0:d80.pix,p1:dY.pix});
+  });
+  rows.sort(function(a,b){return b.g-a.g;});
+  var top=rows.slice(0,10);
+  var cs=document.getElementById('csTop10');
+  if(cs) cs.textContent='% de crecimiento de píxeles · 1980 → '+yrEnd+' · base mínima 30 píxeles'+(regFilter?' · '+regFilter:'');
+  charts['top10']=new Chart(cv.getContext('2d'),{
+    type:'bar',
+    data:{labels:top.map(function(r){return r.l;}),datasets:[{
+      data:top.map(function(r){return parseFloat(r.g.toFixed(1));}),
+      backgroundColor:top.map(function(r){return (RCOLORS_MAP[r.rn]||'#888')+'cc';}),
+      borderColor:top.map(function(r){return RCOLORS_MAP[r.rn]||'#888';}),
+      borderWidth:1.5,borderRadius:4}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{
+          title:function(i){var r=top[i[0].dataIndex];return r.l+' · '+r.rn;},
+          label:function(i){var r=top[i.dataIndex];return[' +'+r.g.toFixed(1)+'%',' '+fmt(r.p0)+' → '+fmt(r.p1)+' píxeles'];}}}},
+      scales:{
+        x:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return '+'+fmt(v)+'%';}},grid:{color:'rgba(0,0,0,.05)'},beginAtZero:true},
+        y:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)}},grid:{display:false}}
+      }
+    }
+  });
 }
 
 function initAnalisis(){
@@ -2339,6 +2564,27 @@ function playAnimation(){
 function buildAnimScatter(yr){
   killChart('animSc');
   var regFilter = document.getElementById('aRegFilt')?document.getElementById('aRegFilt').value:'';
+  // Ejes fijos calculados sobre TODOS los años: la animación queda comparable
+  // (sin esto, los ejes se reescalan en cada año y el crecimiento no se percibe)
+  var mnx=Infinity,mxx=0,mny=Infinity,mxy=0;
+  LOCS.forEach(function(l){
+    var ld=DATA.localities[l];
+    if(regFilter&&ld.region_nombre!==regFilter) return;
+    YEARS_ARR.forEach(function(y){
+      var d=ld.data[y]; if(!d||!d.pob||!d.pix) return;
+      if(d.pix<mnx)mnx=d.pix; if(d.pix>mxx)mxx=d.pix;
+      if(d.pob<mny)mny=d.pob; if(d.pob>mxy)mxy=d.pob;
+    });
+  });
+  var bx,by;
+  if(!isFinite(mnx)){ bx=[undefined,undefined]; by=[undefined,undefined]; }
+  else if(aLog){
+    bx=[Math.max(1,Math.floor(mnx*0.8)),Math.ceil(mxx*1.25)];
+    by=[Math.max(1,Math.floor(mny*0.8)),Math.ceil(mxy*1.25)];
+  } else {
+    bx=[0,Math.ceil(mxx*1.05)];
+    by=[0,Math.ceil(mxy*1.05)];
+  }
   var groups={};
   LOCS.forEach(function(l){
     var ld=DATA.localities[l];
@@ -2358,17 +2604,17 @@ function buildAnimScatter(yr){
     options:{responsive:true,maintainAspectRatio:false,
       animation:{duration:400},
       plugins:{
-        legend:{position:'bottom',labels:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(9)},padding:5,boxWidth:8,usePointStyle:true}},
+        legend:{position:'bottom',labels:{color:'#888879',font:{family:'Space Mono',size:cfs(9)},padding:5,boxWidth:8,usePointStyle:true}},
         tooltip:{callbacks:{
           title:function(i){return i[0].raw.label;},
           label:function(i){return[' Píxeles: '+fmt(i.raw.x),' Pob: '+fmt(i.raw.y)];}
         }}
       },
       scales:{
-        x:{title:{display:true,text:'Píxeles construidos',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},
-          ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(9)},callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}},
-        y:{title:{display:true,text:'Población',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},
-          ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(9)},callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}}
+        x:{type:aLog?'logarithmic':'linear',min:bx[0],max:bx[1],title:{display:true,text:'Píxeles construidos'+(aLog?' (escala log)':''),color:'#888879',font:{family:'Space Mono',size:cfs(10)}},
+          ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)},maxTicksLimit:7,callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}},
+        y:{type:aLog?'logarithmic':'linear',min:by[0],max:by[1],title:{display:true,text:'Población'+(aLog?' (escala log)':''),color:'#888879',font:{family:'Space Mono',size:cfs(10)}},
+          ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)},maxTicksLimit:7,callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}}
       }
     }
   });
@@ -2407,10 +2653,10 @@ function buildTrayectoria(){
         }}
       },
       scales:{
-        x:{title:{display:true,text:'Superficie (píxeles)',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},
-          ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(9)},callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}},
-        y:{title:{display:true,text:'Población',color:'var(--muted)',font:{family:'Space Mono',size:cfs(10)}},
-          ticks:{color:'var(--muted)',font:{family:'Space Mono',size:cfs(9)},callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}}
+        x:{title:{display:true,text:'Superficie (píxeles)',color:'#888879',font:{family:'Space Mono',size:cfs(10)}},
+          ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)},callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}},
+        y:{title:{display:true,text:'Población',color:'#888879',font:{family:'Space Mono',size:cfs(10)}},
+          ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)},callback:function(v){return fmt(v);}},grid:{color:'rgba(0,0,0,.05)'}}
       }
     }
   });
