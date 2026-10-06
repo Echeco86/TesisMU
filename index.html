@@ -367,6 +367,7 @@ footer a:hover{color:var(--text)}
 
 /* Columna derecha — imagen */
 .sp-right{position:relative;overflow:hidden;background:#fff}
+.sp-right picture{display:block;width:100%;height:100%}
 .sp-right img{
   width:100%;height:100%;
   object-fit:cover;object-position:center 20%;
@@ -384,6 +385,7 @@ footer a:hover{color:var(--text)}
 .cv-card{background:var(--card);border:1px solid var(--border);border-radius:10px;max-width:400px;width:100%;padding:28px;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.22)}
 .cv-x{position:absolute;top:13px;right:14px;background:none;border:none;cursor:pointer;font-size:17px;color:var(--muted);line-height:1;font-family:'Space Mono',monospace}
 .cv-photo-wrap{width:200px;height:200px;margin:0 auto 18px;display:block;border-radius:10px;overflow:hidden;border:2px solid var(--border);flex-shrink:0}
+.cv-photo-wrap picture{display:block}
 .cv-photo{width:200px;height:200px;object-fit:cover;object-position:50% 12%;display:block}
 .cv-photo-init{width:200px;height:200px;background:var(--surface);display:none;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:52px;font-weight:900;color:var(--muted);letter-spacing:-.02em}
 .cv-name{font-family:'Fraunces',serif;font-size:18px;font-weight:900;margin-bottom:3px;text-align:center}
@@ -633,8 +635,13 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
 
   <!-- Columna derecha: imagen -->
   <div class="sp-right">
-    <img src="splash-bg.jpg"
-         alt="Huellas urbanas de municipios y comunas de la provincia de Córdoba (GHSL 2020)">
+    <picture>
+      <!-- En ≤720 px la columna está oculta: imagen vacía para no descargarla -->
+      <source media="(max-width:720px)" srcset="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==">
+      <source srcset="assets/splash-bg.v1.webp" type="image/webp">
+      <img src="splash-bg.jpg" width="1600" height="1414" fetchpriority="high" decoding="async"
+           alt="Huellas urbanas de municipios y comunas de la provincia de Córdoba (GHSL 2020)">
+    </picture>
   </div>
 
 </div>
@@ -644,8 +651,12 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
   <div class="cv-card">
     <button class="cv-x" onclick="closeCV()">✕</button>
     <div class="cv-photo-wrap">
-      <img src="foto-1776705581349.jpg" class="cv-photo" alt="Juan Manuel Echecolanea"
-           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <picture>
+        <source srcset="assets/autor.v1.webp" type="image/webp">
+        <img src="foto-1776705581349.jpg" class="cv-photo" alt="Juan Manuel Echecolanea" width="600" height="894"
+             loading="lazy" decoding="async"
+             onerror="this.closest('picture').style.display='none';this.closest('.cv-photo-wrap').querySelector('.cv-photo-init').style.display='flex'">
+      </picture>
       <div class="cv-photo-init">JME</div>
     </div>
     <div class="cv-name">Juan Manuel Echecolanea</div>
