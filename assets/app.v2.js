@@ -110,6 +110,7 @@ function showSec(id,btn){
   if(id==='comparador') buildCmp();
   if(id==='conclusiones') buildConclusiones();
   if(id==='intro') initScrollyObserver();
+  syncHash(true);
 }
 
 // ── MAP (MapLibre GL JS) ──
@@ -374,6 +375,8 @@ function _createMap(style){
       var act=YEARS.filter(function(y){return layerActive[y];});
       if(!act.length) toggleMapYr(2020);
       else act.forEach(function(y){ if(!map.getLayer('density-fill-'+y)) _ensureYearLayer(y); });
+      // Municipio pedido por la URL antes de que el mapa existiera
+      if(_pendingMun){ var k=_pendingMun; _pendingMun=null; _hashLock=true; try{ zoomToMun(k); } finally { _hashLock=false; } }
     },100);
   });
 }
@@ -407,8 +410,9 @@ function selectMun(name,featOrNull){
   if(es) es.style.display='none';
   if(cc) cc.style.display='flex';
 
-  selectedMun=name;
+  selectedMun=name; _munSelected=true;
   if(window.matchMedia('(max-width:767px)').matches) toggleMapSheet(true);
+  syncHash(true);
 
   if(map){
     map.setFilter('muni-selected',['==','NOMBRE',name]);
@@ -458,7 +462,10 @@ function selectMun(name,featOrNull){
       '</div>'+
       (patron?'<div class="map-info-row" style="margin-top:4px"><span>Patrón</span><span style="font-size:10px;font-weight:700;color:'+patron.color+'">'+patron.label+'</span></div>':'')+
       '<div class="nota-chart">Población: censos 1980–2022 · superficie: GHSL 1980–2020.</div>'+
-      '<button onclick="jumpToMunFromMap()" style="width:100%;margin-top:8px;padding:6px;background:var(--text);color:#fff;border:none;border-radius:5px;font-family:Space Mono,monospace;font-size:10px;cursor:pointer;font-weight:700">Ver análisis →</button>';
+      '<div class="ficha-acciones">'+
+        '<button class="ficha-btn ficha-btn-main" onclick="jumpToMunFromMap()">Ver análisis →</button>'+
+        '<button class="ficha-btn" onclick="copyLink(this)" aria-live="polite">Copiar enlace</button>'+
+      '</div>';
   }
 }
 
@@ -895,6 +902,7 @@ function setCmpModo(modo, btn){
   var hallazgos = document.getElementById('cmpHallazgos');
   if(hallazgos) hallazgos.style.display = modo==='region' ? 'block' : 'none';
   buildCmp();
+  syncHash(true);
 }
 
 function setCmpEsc(esc, btn){
@@ -914,7 +922,7 @@ function buildCmp(){
       const s=document.createElement('select');
       s.setAttribute('aria-label','Región '+(i+1)+' a comparar');
       s.innerHTML='<option value="">— Región —</option>'+RNAMES2.map(function(r){return'<option value="'+r+'"'+(r===cmpRegSels[i]?' selected':'')+'>'+rlab(r)+'</option>';}).join('');
-      s.onchange=function(){cmpRegSels[i]=s.value;buildCmpRegCards();renderCmpChart();buildHallazgos();};
+      s.onchange=function(){cmpRegSels[i]=s.value;buildCmpRegCards();renderCmpChart();buildHallazgos();syncHash(true);};
       d.appendChild(s);
       const inner=document.createElement('div');inner.id='cc'+i;d.appendChild(inner);
       g.appendChild(d);
@@ -927,7 +935,7 @@ function buildCmp(){
       const s=document.createElement('select');
       s.setAttribute('aria-label','Localidad '+(i+1)+' a comparar');
       s.innerHTML='<option value="">— Seleccionar —</option>'+LOCS.map(function(l){return'<option value="'+l+'"'+(l===cmpSels[i]?' selected':'')+'>'+dn(l)+'</option>';}).join('');
-      s.onchange=function(){cmpSels[i]=s.value;buildCmpCards();renderCmpChart();};
+      s.onchange=function(){cmpSels[i]=s.value;buildCmpCards();renderCmpChart();syncHash(true);};
       d.appendChild(s);
       const inner=document.createElement('div');inner.id='cc'+i;d.appendChild(inner);
       g.appendChild(d);
@@ -1781,11 +1789,68 @@ window.addEventListener('resize',updateScrollHint);
 
 // ── INIT ──
 window.addEventListener('DOMContentLoaded',()=>{
+  // Enlace directo (#seccion/...): se saltea la portada y se abre lo pedido
+  if(location.hash && applyHash()){ var sp=document.getElementById('splash'); if(sp) sp.style.display='none'; }
   var rtw=document.getElementById('regTableWrap'); if(rtw) rtw.addEventListener('scroll',updateScrollHint,{passive:true});
   document.querySelectorAll('input.rng').forEach(rngFill);
   initSplash();
   initScrollyObserver();
 });
+
+// ══ ESTADO EN LA URL ══
+// #seccion · #mapa/loc=villa-carlos-paz · #comparador/loc=a,b,c · #comparador/reg=a,b,c
+// Cada cambio de sección, municipio o selección del comparador agrega una entrada al historial
+// (el botón Atrás funciona); popstate reaplica el estado sin volver a escribirlo.
+var _hashLock=false, _pendingMun=null, _munSelected=false;
+function _slug(s){ return _normStr(s).replace(/\s+/g,'-'); }
+var SLUG2LOC={}, SLUG2REG={};
+LOCS.forEach(function(k){ SLUG2LOC[_slug(dn(k))]=k; });
+Object.keys(DATA.regions).forEach(function(r){ SLUG2REG[_slug(rlab(r))]=r; });
+function _navBtn(id){ return document.querySelector('.nav-items button[onclick*="\''+id+'\'"]'); }
+function currentHash(){
+  var sec=(document.querySelector('.section.active')||{}).id||'intro', h='#'+sec;
+  if(sec==='mapa' && _munSelected && selectedMun) h+='/loc='+_slug(dn(selectedMun));
+  if(sec==='comparador'){
+    var parts = cmpModo==='region' ? cmpRegSels.filter(Boolean).map(function(r){return _slug(rlab(r));})
+                                   : cmpSels.filter(Boolean).map(function(l){return _slug(dn(l));});
+    if(parts.length) h+=(cmpModo==='region'?'/reg=':'/loc=')+parts.join(',');
+  }
+  return h;
+}
+function syncHash(push){
+  if(_hashLock||!window.history||!history.pushState) return;
+  var h=currentHash();
+  if(h===location.hash) return;
+  if(push) history.pushState(null,'',h); else history.replaceState(null,'',h);
+}
+function applyHash(){
+  var m=(location.hash||'').match(/^#([a-z]+)(?:\/(loc|reg)=([^\/]*))?$/);
+  if(!m||!document.querySelector('section#'+m[1])) return false;
+  var sec=m[1], kind=m[2], parts=m[3]?decodeURIComponent(m[3]).split(','):[];
+  _hashLock=true;
+  try{
+    if(sec==='comparador' && kind){
+      if(kind==='reg'){ cmpRegSels=[0,1,2].map(function(i){ return SLUG2REG[parts[i]]||''; }); setCmpModo('region',document.getElementById('cmpModoReg')); }
+      else { cmpSels=[0,1,2].map(function(i){ return SLUG2LOC[parts[i]]||''; }); setCmpModo('localidad',document.getElementById('cmpModoLoc')); }
+    }
+    showSec(sec,_navBtn(sec));
+    if(sec==='mapa' && kind==='loc' && SLUG2LOC[parts[0]]){
+      if(_mapLoaded) zoomToMun(SLUG2LOC[parts[0]]); else _pendingMun=SLUG2LOC[parts[0]];
+    }
+  } finally { _hashLock=false; }
+  return true;
+}
+window.addEventListener('popstate',function(){
+  if(!applyHash()){ _hashLock=true; try{ showSec('intro',_navBtn('intro')); } finally { _hashLock=false; } }
+});
+// "Copiar enlace" de la ficha
+function copyLink(btn){
+  syncHash(false);
+  var url=location.href;
+  function done(ok){ btn.textContent=ok?'¡Enlace copiado!':'Copiá la dirección de la barra'; setTimeout(function(){ btn.textContent='Copiar enlace'; },2200); }
+  if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(url).then(function(){done(true);},function(){done(false);}); return; }
+  try{ var t=document.createElement('textarea'); t.value=url; t.style.position='fixed'; t.style.opacity='0'; document.body.appendChild(t); t.select(); var ok=document.execCommand('copy'); t.remove(); done(ok); }catch(e){ done(false); }
+}
 
 // ══ MAP DOWNLOAD FROM DRIVE ══
 var DRIVE_FOLDER = '1GSGLTnf-798G4vggjE7BbhgAr6PVCVEN';
