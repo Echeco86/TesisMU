@@ -461,12 +461,38 @@ function selectMun(name,featOrNull){
         '<span>Crec. sup. 1980–2020</span><span style="color:'+(ppix&&parseFloat(ppix)>=0?'#1a7a1a':'#7a1a1a')+';font-weight:700">'+fmtPct(ppix)+'</span>'+
       '</div>'+
       (patron?'<div class="map-info-row" style="margin-top:4px"><span>Patrón</span><span style="font-size:10px;font-weight:700;color:'+patron.color+'">'+patron.label+'</span></div>':'')+
+      rankingHTML(name)+
       '<div class="nota-chart">Población: censos 1980–2022 · superficie: GHSL 1980–2020.</div>'+
       '<div class="ficha-acciones">'+
         '<button class="ficha-btn ficha-btn-main" onclick="jumpToMunFromMap()">Ver análisis →</button>'+
         '<button class="ficha-btn" onclick="copyLink(this)" aria-live="polite">Copiar enlace</button>'+
       '</div>';
   }
+}
+
+// ── Ranking en la ficha: puesto en la provincia y percentil dentro de la región (corte 2020) ──
+// Puesto = 1 + cantidad de localidades con valor mayor (los empates comparten puesto).
+// Percentil regional = % de localidades de la región con valor menor (+ la mitad de los empates).
+var RANK_INDS=[['pob','Población'],['pix','Superficie'],['den','Densidad'],['nuc','Núcleos']];
+function rankOf(key,ind,yr){
+  yr=yr||2020;
+  var v=((DATA.localities[key].data[yr])||{})[ind]; if(v==null) return null;
+  var rn=DATA.localities[key].region_nombre, mayor=0, n=0, rMen=0, rIg=0, rN=0;
+  LOCS.forEach(function(l){
+    var w=((DATA.localities[l].data[yr])||{})[ind]; if(w==null) return;
+    n++; if(w>v) mayor++;
+    if(DATA.localities[l].region_nombre===rn){ rN++; if(w<v) rMen++; else if(w===v) rIg++; }
+  });
+  return {puesto:mayor+1, n:n, pct:Math.round(100*(rMen+0.5*(rIg-1))/Math.max(1,rN-1)), rN:rN, region:rn};
+}
+function rankingHTML(key){
+  var filas=RANK_INDS.map(function(it){
+    var r=rankOf(key,it[0]); if(!r) return '';
+    return '<div class="rank-row"><span>'+it[1]+'</span><span><strong>'+fmt(r.puesto)+'.º</strong>/'+fmt(r.n)+' · <span title="Percentil dentro de '+rlab(r.region)+' ('+r.rN+' localidades)">p'+r.pct+'</span></span></div>';
+  }).join('');
+  var rn=DATA.localities[key].region_nombre;
+  return '<div class="ficha-rank"><div class="ficha-rank-t">Ranking 2020</div>'+filas+
+    '<div class="rank-nota">puesto en la provincia · p = percentil en '+rlab(rn)+'</div></div>';
 }
 
 function flipCard(btn){
