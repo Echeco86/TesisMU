@@ -1019,6 +1019,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
       <h3>Distribución de patrones de crecimiento</h3>
       <div class="cs" id="csPatrones">clasificación 1980→2020 · todas las localidades</div>
       <canvas id="chPatrones" style="max-height:260px"></canvas>
+      <div class="nota-chart" id="notaPatrones"></div>
     </div>
     <div class="cc">
       <h3>Top 10 · Expansión superficial</h3>
@@ -2480,7 +2481,7 @@ function buildAnalisis(){
       tooltip:{callbacks:{title:function(i){return i[0].raw.label||'';},label:function(i){if(!i.raw.label) return'';return[' Crec. pob.: '+(i.raw.x>=0?'+':'')+i.raw.x.toFixed(1)+'%',' Crec. sup.: '+(i.raw.y>=0?'+':'')+i.raw.y.toFixed(1)+'%'];}}}
     }),
     scales:{
-      x:{title:{display:true,text:'Crecimiento poblacional (%)',color:'#888879',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}},
+      x:{min:-100,title:{display:true,text:'Crecimiento poblacional (%)',color:'#888879',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}},
       y:{title:{display:true,text:'Crecimiento superficial (%)',color:'#888879',font:{family:'Space Mono',size:cfs(10)}},ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)},callback:function(v){return v+'%';}},grid:{color:'rgba(0,0,0,.05)'}}
     }})
   });
@@ -2545,14 +2546,17 @@ function buildPatrones(){
   var cv=document.getElementById('chPatrones'); if(!cv) return;
   killChart('patrones');
   var regFilter=document.getElementById('aRegFilt')?document.getElementById('aRegFilt').value:'';
-  var counts={},total=0;
+  var counts={},total=0,sinClasif=0;
   LOCS.forEach(function(l){
     if(regFilter&&DATA.localities[l].region_nombre!==regFilter) return;
-    var p=clasificarPatron(l); if(!p) return;
+    var p=clasificarPatron(l); if(!p){ sinClasif++; return; }
     counts[p.label]=(counts[p.label]||0)+1; total++;
   });
   var cs=document.getElementById('csPatrones');
   if(cs) cs.textContent='clasificación 1980→2020 · '+total+' localidades'+(regFilter?' · '+regFilter:'');
+  // clasificarPatron() necesita población y superficie > 0 en 1980 y 2020 para calcular la variación
+  var nota=document.getElementById('notaPatrones');
+  if(nota) nota.textContent=sinClasif?(sinClasif+(sinClasif===1?' localidad queda':' localidades quedan')+' sin clasificar: no tienen población censada o superficie construida detectada en 1980 (o en 2020), y sin valor de base no se puede calcular la variación.'):'';
   var labels=PATRON_ORDER.filter(function(o){return counts[o];});
   charts['patrones']=new Chart(cv.getContext('2d'),{
     type:'bar',
