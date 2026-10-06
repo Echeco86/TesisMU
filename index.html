@@ -1341,6 +1341,7 @@ var layerOpacity = {1980:0.85, 1990:0.85, 2000:0.85, 2010:0.85, 2020:0.85};
 var layerActive  = {1980:false, 1990:false, 2000:false, 2010:false, 2020:false};
 var _mapLoaded   = false;
 var _pendingYrs  = [];
+var _loadingYrs  = {};
 
 // Compute bounding box [[minLng,minLat],[maxLng,maxLat]] from a GeoJSON feature
 function featureBBox(feat){
@@ -1392,9 +1393,11 @@ async function _ensureYearLayer(yr){
   if(!_mapLoaded){_pendingYrs.push(yr);return;}
   var layerId='density-fill-'+yr;
   if(map.getLayer(layerId)){
-    map.setLayoutProperty(layerId,'visibility','visible');
+    map.setLayoutProperty(layerId,'visibility',layerActive[yr]?'visible':'none');
     return;
   }
+  if(_loadingYrs[yr]) return;
+  _loadingYrs[yr]=true;
   var loadMsg=document.getElementById('mapLoadMsg');
   var loadTxt=document.getElementById('mapLoadText');
   if(loadMsg){if(loadTxt)loadTxt.textContent='Cargando capa '+yr+'...';loadMsg.style.display='block';}
@@ -1407,10 +1410,13 @@ async function _ensureYearLayer(yr){
       id:layerId,
       type:'fill',
       source:'year-'+yr,
+      layout:{visibility:layerActive[yr]?'visible':'none'},
       paint:{'fill-color':_densColorExpr(yr),'fill-opacity':layerOpacity[yr]}
     },'muni-outline');
+    _loadingYrs[yr]=false;
     if(loadMsg)loadMsg.style.display='none';
   }catch(e){
+    _loadingYrs[yr]=false;
     if(loadMsg){if(loadTxt)loadTxt.textContent='Error '+yr+': '+e.message;setTimeout(function(){if(loadMsg)loadMsg.style.display='none';},3000);}
     layerActive[yr]=false;
     var btn=document.getElementById('yrb-'+yr);
@@ -1418,31 +1424,55 @@ async function _ensureYearLayer(yr){
   }
 }
 
+// Mapa base vectorial libre (OpenFreeMap, sin API key). Si el estilo no carga,
+// el mapa arranca igual sobre un fondo liso crema.
+var BASEMAP_STYLE_URL='https://tiles.openfreemap.org/styles/positron';
+var BASEMAP_ATTR='<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> &copy; <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> · Datos &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">colaboradores de OpenStreetMap</a>';
+var MAP_BG='#f5f3ee';
+
+function _fallbackStyle(){
+  return {
+    version:8,
+    sources:{'municipios':{type:'geojson',data:MUNICIPIOS_GJ}},
+    layers:[{id:'bg-crema',type:'background',paint:{'background-color':MAP_BG}}]
+  };
+}
+
+function _loadBaseStyle(){
+  var ctrl=(typeof AbortController!=='undefined')?new AbortController():null;
+  var timer=setTimeout(function(){ if(ctrl) ctrl.abort(); },5000);
+  return fetch(BASEMAP_STYLE_URL,ctrl?{signal:ctrl.signal}:{})
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(st){
+      clearTimeout(timer);
+      if(!st||!st.sources||!Array.isArray(st.layers)) throw new Error('estilo inválido');
+      // Sin rótulos, como el basemap anterior (light_nolabels): las capas propias quedan legibles
+      st.layers=st.layers.filter(function(l){ return l.type!=='symbol'; });
+      st.layers.forEach(function(l){
+        if(l.type==='background'){ l.paint=l.paint||{}; l.paint['background-color']=MAP_BG; }
+      });
+      Object.keys(st.sources).forEach(function(k){ st.sources[k].attribution=BASEMAP_ATTR; });
+      st.sources['municipios']={type:'geojson',data:MUNICIPIOS_GJ};
+      return st;
+    })
+    .catch(function(e){
+      clearTimeout(timer);
+      console.warn('Mapa base no disponible; se usa fondo liso.',e&&e.message);
+      return _fallbackStyle();
+    });
+}
+
 function initMap(){
+  _loadBaseStyle().then(_createMap);
+}
+
+function _createMap(style){
   map=new maplibregl.Map({
     container:'map',
-    style:{
-      version:8,
-      sources:{
-        'carto':{
-          type:'raster',
-          tiles:[
-            'https://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
-            'https://b.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
-            'https://c.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
-            'https://d.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png'
-          ],
-          tileSize:256,
-          attribution:'&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        },
-        'municipios':{type:'geojson',data:MUNICIPIOS_GJ}
-      },
-      layers:[
-        {id:'carto-base',type:'raster',source:'carto',paint:{'raster-opacity':0.6}}
-      ]
-    },
+    style:style,
     center:[-63.78,-32.18],
-    zoom:7
+    zoom:7,
+    attributionControl:false
   });
 
   map.addControl(new maplibregl.NavigationControl(),'bottom-right');
@@ -1482,7 +1512,12 @@ function initMap(){
 
     map.fitBounds([[-65.769,-34.858],[-61.788,-29.512]],{padding:10});
     renderMunList('');
-    setTimeout(function(){toggleMapYr(2020);},100);
+    setTimeout(function(){
+      // Años activados antes de que el mapa existiera: cargarlos; si no hay ninguno, 2020
+      var act=YEARS.filter(function(y){return layerActive[y];});
+      if(!act.length) toggleMapYr(2020);
+      else act.forEach(function(y){ if(!map.getLayer('density-fill-'+y)) _ensureYearLayer(y); });
+    },100);
   });
 }
 
@@ -2970,18 +3005,12 @@ function _build3DLayers(yr, ghslData){
     ? MUNICIPIOS_GJ.features.filter(function(f){return f.properties.NOMBRE===selectedMun;})
     : [];
   return [
-    new deck.TileLayer({
-      id:'basemap-3d',
-      data:['https://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
-            'https://b.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
-            'https://c.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png',
-            'https://d.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png'],
-      tileSize:256,
-      renderSubLayers:function(props){
-        var bb=props.tile.boundingBox;
-        return new deck.BitmapLayer(props,{data:null,image:props.data,
-          bounds:[bb[0][0],bb[0][1],bb[1][0],bb[1][1]]});
-      }
+    // Base del 3D: ejidos municipales en tono crema (sin teselas raster externas)
+    new deck.GeoJsonLayer({
+      id:'muni-base-3d',
+      data:MUNICIPIOS_GJ,
+      stroked:false, filled:true,
+      getFillColor:[221,217,206,120]
     }),
     new deck.GeoJsonLayer({
       id:'ghsl3d-'+yr,
