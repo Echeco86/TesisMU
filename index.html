@@ -1393,17 +1393,19 @@ function featureBBox(feat){
   return [[mn[0],mn[1]],[mx[0],mx[1]]];
 }
 
-// Build MapLibre match expression for density category → color
+// Capas de densidad v2: propiedad única dens_cat con las clases de la leyenda
+// (Muy Baja · Baja · Media · Alta · Muy Alta), 5 decimales. Ver CHANGELOG (Tanda 2).
+function densLayerUrl(yr){ return yr+'_v2.geojson'; }
+
+// Expresión MapLibre: clase de densidad → color del año
 function _densColorExpr(yr){
   var c=FGB_COLORS[yr];
-  // coalesce handles the inconsistent field names across years
-  var field=['downcase',['coalesce',['get','dens_cat'],['get','Dens_Cat'],['get','Densi_Cat'],['get','Dens_cat'],'']];
-  return ['match',field,
-    'muy baja',c[0],'muy bajo',c[0],
-    'baja',c[1],'bajo',c[1],
-    'media',c[2],'medio',c[2],
-    'alta',c[3],'alto',c[3],
-    'muy alta',c[4],'muy alto',c[4],
+  return ['match',['get','dens_cat'],
+    FGB_CAT_LABELS[0],c[0],
+    FGB_CAT_LABELS[1],c[1],
+    FGB_CAT_LABELS[2],c[2],
+    FGB_CAT_LABELS[3],c[3],
+    FGB_CAT_LABELS[4],c[4],
     '#ccc'];
 }
 
@@ -1442,7 +1444,7 @@ async function _ensureYearLayer(yr){
   var loadTxt=document.getElementById('mapLoadText');
   if(loadMsg){if(loadTxt)loadTxt.textContent='Cargando capa '+yr+'...';loadMsg.style.display='block';}
   try{
-    var resp=await fetch(yr+'_Ligth.geojson');
+    var resp=await fetch(densLayerUrl(yr));
     if(!resp.ok) throw new Error('HTTP '+resp.status);
     var gj=await resp.json();
     map.addSource('year-'+yr,{type:'geojson',data:gj});
@@ -3060,9 +3062,7 @@ function _build3DLayers(yr, ghslData){
   var CAT3D={'muy baja':0,'muy bajo':0,'baja':1,'bajo':1,'media':2,'medio':2,'alta':3,'alto':3,'muy alta':4,'muy alto':4};
   function catIdx(f){
     var props=f.properties||{};
-    var cat=(props.Dens_Cat||props.Densi_Cat||props.dens_cat||props.Dens_cat||'').toLowerCase().trim();
-    var idx=CAT3D[cat];
-    if(idx===undefined){ var v=props.DN||props.BU||props.dn||props.bu||0; idx=v>0?Math.min(Math.floor(v/2000),4):2; }
+    var idx=CAT3D[(props.dens_cat||'').toLowerCase()];
     return idx!==undefined?idx:2;
   }
   var selFeatures=selectedMun
@@ -3131,7 +3131,7 @@ async function render3DMap(){
   if(loadMsg){ if(loadTxt) loadTxt.textContent='Cargando vista 3D '+yr+'...'; loadMsg.style.display='block'; }
   if(!loaded3D[yr]){
     try{
-      var resp=await fetch(yr+'_Ligth.geojson');
+      var resp=await fetch(densLayerUrl(yr));
       if(!resp.ok) throw new Error('HTTP '+resp.status);
       loaded3D[yr]=await resp.json();
     }catch(e){
@@ -3169,8 +3169,8 @@ async function render3DMap(){
       if(!o.object||!o.object.properties) return null;
       var p=o.object.properties;
       if(p.NOMBRE) return {html:'<div style="font-family:Space Mono,monospace;font-size:10px;background:#1a1a1a;color:#f5f3ee;padding:6px 10px;border-radius:4px"><strong>'+dn(p.NOMBRE)+'</strong></div>'};
-      var v=p.DN||p.BU||p.dn||0;
-      return {html:'<div style="font-family:Space Mono,monospace;font-size:10px;background:#1a1a1a;color:#f5f3ee;padding:6px 10px;border-radius:4px">Valor BU: <strong>'+v+'</strong></div>'};
+      if(!p.dens_cat) return null;
+      return {html:'<div style="font-family:Space Mono,monospace;font-size:10px;background:#1a1a1a;color:#f5f3ee;padding:6px 10px;border-radius:4px">Densidad construida: <strong>'+p.dens_cat+'</strong></div>'};
     }
   });
 }
@@ -3253,7 +3253,7 @@ document.addEventListener('DOMContentLoaded',function(){
     "distribution": {
       "@type": "DataDownload",
       "encodingFormat": "application/geo+json",
-      "contentUrl": "https://raw.githubusercontent.com/Echeco86/TesisMU/main/2020_Ligth.geojson"
+      "contentUrl": "https://expansionurbana.vercel.app/2020_v2.geojson"
     }
   },
   {

@@ -77,7 +77,7 @@ Salida esperada:
 
 ```
 tippecanoe X.XX.X
-  OK  1980_Ligth.geojson (13M)
+  OK  1980_v2.geojson (13M)
   ...
 Procesando tippecanoe...
 Extrayendo a tiles/ ...
@@ -153,7 +153,7 @@ on:
   push:
     branches: [main]
     paths:
-      - '*_Ligth.geojson'
+      - '*_v2.geojson'
       - 'build-tiles.sh'
 
 jobs:
@@ -214,7 +214,7 @@ tippecanoe-decode tiles/7/38/56.pbf 7 38 56 | head -40
 
 ## Notas sobre los datos
 
-Los archivos `*_Ligth.geojson` contienen la **huella urbana construida** (GHSL —
+Los archivos `*_v2.geojson` contienen la **huella urbana construida** (GHSL —
 Global Human Settlement Layer) de la provincia de Córdoba, clasificada en
 5 categorías de densidad construida (Muy Baja → Muy Alta). Cada archivo tiene
 5 geometrías MultiPolygon (una por categoría), con hasta ~730 000 vértices en

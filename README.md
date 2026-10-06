@@ -76,7 +76,7 @@ La provincia se organiza en **9 regiones** de análisis:
 ```
 TesisMU/
 ├── index.html                  # Dashboard principal (archivo autocontenido)
-├── {año}_Ligth.geojson         # Capas de densidad por año (1980–2020)
+├── {año}_v2.geojson         # Capas de densidad por año (1980–2020)
 └── README.md
 ```
 

@@ -37,7 +37,7 @@ echo ""
 # ── verificar archivos fuente ────────────────────────────────────────────────
 YEARS=(1980 1990 2000 2010 2020)
 for YR in "${YEARS[@]}"; do
-  FILE="${YR}_Ligth.geojson"
+  FILE="${YR}_v2.geojson"
   if [[ ! -f "$FILE" ]]; then
     echo "ERROR: Falta el archivo $FILE"
     exit 1
@@ -53,7 +53,7 @@ TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
 for YR in "${YEARS[@]}"; do
-  SRC="${YR}_Ligth.geojson"
+  SRC="${YR}_v2.geojson"
   DST="$TMP/year_${YR}.geojson"
 
   if [[ $USE_JQ -eq 1 ]]; then
