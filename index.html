@@ -77,12 +77,15 @@ select:focus,input:focus{border-color:var(--text)}
 .pill:hover{border-color:var(--text);color:var(--text)}
 .pill.on{background:var(--text);border-color:var(--text);color:#fff;font-weight:700}
 .mapa-layout{display:grid;grid-template-columns:1fr 340px;height:calc(100vh - 100px);gap:0}
-.mapa-left{position:relative;height:100%}
+.mapa-left{position:relative;height:100%;min-width:0}
+.mapa-layout>*{min-width:0}
 .mapa-right{display:flex;flex-direction:column;background:var(--bg);border-left:1px solid var(--border);overflow:hidden}
 .mapa-right-header{padding:14px 14px 0;flex-shrink:0}
 .mapa-right-charts{flex:1;overflow-y:auto;padding:6px 10px 10px;display:flex;flex-direction:column;gap:7px}
 .mapa-right-charts .cc{padding:8px 10px}
 .mapa-canvas-wrap{position:relative;height:220px;overflow:visible}
+@keyframes panel-flash{0%{box-shadow:inset 0 0 0 3px var(--text)}100%{box-shadow:inset 0 0 0 0 rgba(0,0,0,0)}}
+.mapa-right.flash{animation:panel-flash 1.1s ease-out}
 /* Tablet (768–1024px): panel derecho más angosto, sidebar compacto */
 @media(min-width:768px) and (max-width:1024px){
   .mapa-layout{grid-template-columns:1fr 260px}
@@ -504,13 +507,19 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
   #chDenEvol,#chScatter3,#chCmp,#chCmpRel{height:180px}
   #chConcExp,#chConcDen{height:160px}
   .reg-canvas-wrap{height:240px;overflow:hidden}
-  /* Mapa: columna única, mapa ocupa 100% ancho */
-  .mapa-layout{grid-template-columns:1fr!important;height:calc(100vh - 90px)!important}
-  .mapa-right{display:none!important}
+  /* Mapa: columna única; los gráficos de la localidad quedan debajo del mapa y la ficha */
+  #mapa.section.active{margin:-12px -16px 0}
+  .mapa-layout{grid-template-columns:1fr!important;height:auto!important}
+  .mapa-left{height:72vh;height:72svh;min-height:420px}
+  .mapa-right{border-left:none;border-top:2px solid var(--text);overflow:visible;scroll-margin-top:8px}
+  .mapa-right-header{padding:14px 16px 0}
+  .mapa-right-charts-wrap{overflow:visible}
+  #charts-container{overflow:visible;padding:10px 16px 24px}
+  #empty-state{padding:20px 16px 28px}
   /* Bottom sheet: sidebar flotante se convierte en panel inferior */
   .map-sidebar{
     position:absolute!important;bottom:0!important;left:0!important;top:auto!important;
-    width:100%!important;height:40vh;max-height:40vh!important;
+    width:100%!important;height:45%;max-height:45%!important;
     border-radius:12px 12px 0 0;border:none;border-top:1px solid var(--border);
     box-shadow:0 -4px 24px rgba(0,0,0,.15);background:rgba(255,255,255,.98)!important;
     gap:0!important;padding:8px 0 0!important;overflow-y:auto!important;z-index:1001
@@ -525,6 +534,8 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
     border-bottom:1px solid var(--border)!important
   }
   .map-panel:last-child{border-bottom:none!important}
+  /* La ficha del municipio va primero en la hoja inferior */
+  #mapInfoPanel{order:-1}
 
   /* ── MARCO TEÓRICO ──
      theory-grid ya tiene @media(max-width:800px)→1col, cubre mobile ✓
@@ -1472,7 +1483,14 @@ function _createMap(style){
     style:style,
     center:[-63.78,-32.18],
     zoom:7,
-    attributionControl:false
+    attributionControl:false,
+    // En móvil el mapa está dentro de una página que scrollea: un dedo scrollea, dos mueven el mapa
+    cooperativeGestures:window.matchMedia('(max-width:767px)').matches,
+    locale:{
+      'CooperativeGesturesHandler.WindowsHelpText':'Usá Ctrl + rueda para hacer zoom en el mapa',
+      'CooperativeGesturesHandler.MacHelpText':'Usá ⌘ + rueda para hacer zoom en el mapa',
+      'CooperativeGesturesHandler.MobileHelpText':'Usá dos dedos para mover el mapa'
+    }
   });
 
   map.addControl(new maplibregl.NavigationControl(),'bottom-right');
@@ -1625,10 +1643,21 @@ function goToLocalidad(){
   buildAnalisis();
 }
 
+// "Ver análisis →": en pantallas angostas los gráficos están debajo del mapa → scroll hasta ellos;
+// en escritorio ya están a la derecha → se vuelve al primero y se marca la columna.
 function jumpToMunFromMap(){
   if(!selectedMun) return;
-  document.getElementById('chartLocName').textContent=selectedMun;
   renderCharts();
+  var panel=document.querySelector('.mapa-right');
+  if(!panel) return;
+  var cc=document.getElementById('charts-container');
+  if(window.matchMedia('(max-width:767px)').matches){
+    var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    panel.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
+  } else {
+    if(cc) cc.scrollTop=0;
+    panel.classList.remove('flash'); void panel.offsetWidth; panel.classList.add('flash');
+  }
 }
 
 function renderMunList(q){
