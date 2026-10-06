@@ -86,7 +86,7 @@ Ningún cambio modifica valores analíticos: `DATA` y `MUNICIPIOS_GJ` se verific
   - Archivos nuevos: `1990_v3.geojson` (6,7 MB) y `capas/1990_v2.pmtiles`.
 - Validación contra `DATA`:
   - 93.791 píxeles, igual al total de 1990.
-  - 425 de 427 localidades con el mismo conteo y 416 con la misma densidad media (±0,1).
+  - 425 de 427 localidades con el mismo conteo y la misma densidad media (las 8 sin superficie en 1990 también dan 0). Las dos restantes, Valle Hermoso y Casa Grande, se intercambian 2 píxeles de borde.
   - Superficie creciente 1980 → 1990 → 2000 (86.550 → 92.579 → 110.597 ha) y misma grilla que los otros años (distancia mediana entre vértices: 0 m).
 - La versión de cada capa queda en `DENS_GEOJSON_VER` / `DENS_TILES_VER`. Script reproducible: `tools/build-capa-pixeles.sh`.
 
