@@ -1,0 +1,9 @@
+# No se publican: tiles sin uso, herramientas, documentación interna y fuentes de build
+tiles/
+tools/
+docs/
+*.sh
+*.mbtiles
+README.md
+README_MIGRACION.md
+CHANGELOG.md
