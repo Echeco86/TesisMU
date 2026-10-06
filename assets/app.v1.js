@@ -5,7 +5,26 @@ const YEARS=[1980,1990,2000,2010,2020];
 // Censo usado en cada corte (la superficie GHSL sí es del año redondo)
 const CENSO={1980:1980,1990:1991,2000:2001,2010:2010,2020:2022};
 const YC={1980:'#28c924',1990:'#1ec3e6',2000:'#854bfa',2010:'#e33943',2020:'#faa523'};
-const RCLS={1:'rb1',2:'rb2',3:'rb3',4:'rb4',5:'rb5',6:'rb6',7:'rb7',8:'rb8',9:'rb9'};
+// Paleta de las 9 regiones: ÚNICA fuente de color regional (gráficos, tablas, chips, comparador).
+// Validada con el validador CVD (OKLab, Machado 2009): pares adyacentes ΔE ≥ 19,9 con protanopia/
+// deuteranopia y ≥ 23,9 en visión normal; todos contra todos ΔE ≥ 9,7 (CVD). A ΔE ≥ 15 de los
+// colores de año y ≥ 3:1 sobre blanco. El orden sigue el de DATA.regions (vecinos en líneas y barras).
+const REGION_COLORS={
+  'Gran Córdoba':     '#249d83',
+  'Ciudades +50,000': '#861192',
+  'Región Sureste':   '#8f9817',
+  'Valles Turisticos':'#943262',
+  'Región Norte':     '#9b87d9',
+  'Región Centro':    '#a06108',
+  'Región Sur':       '#1649d5',
+  'Región Este':      '#8f3301',
+  'Región Oeste':     '#267aa3'
+};
+// Chip de región: texto en tinta (contraste), tinte de fondo y barra lateral con el color de la región
+function regBadge(rn){
+  var c=REGION_COLORS[rn]||'#888';
+  return '<span class="badge reg-badge" style="background:'+c+'1f;box-shadow:inset 3px 0 0 '+c+'">'+rlab(rn)+'</span>';
+}
 // Grafía de visualización (la clave original de DATA/MUNICIPIOS_GJ queda intacta para los joins).
 // Tabla de revisión: docs/equivalencias-nombres.csv
 const NOMBRE_VIS={"ACHIRAS":"Achiras","ADELIA MARIA":"Adelia María","AGUA DE ORO":"Agua de Oro","ALCIRA":"Alcira","ALDEA SANTA MARIA":"Aldea Santa María","ALEJANDRO ROCA":"Alejandro Roca","ALEJO LEDESMA":"Alejo Ledesma","ALICIA":"Alicia","ALMAFUERTE":"Almafuerte","ALPA CORRAL":"Alpa Corral","ALTA GRACIA":"Alta Gracia","ALTO ALEGRE":"Alto Alegre","ALTO DE LOS QUEBRACHOS":"Alto de los Quebrachos","ALTOS DE CHIPION":"Altos de Chipión","AMBOY":"Amboy","AMBUL":"Ambul","ANA ZUMARAN":"Ana Zumarán","ANISACATE":"Anisacate","ARIAS":"Arias","ARROYITO":"Arroyito","ARROYO ALGODON":"Arroyo Algodón","ARROYO CABRAL":"Arroyo Cabral","ARROYO LOS PATOS":"Arroyo Los Patos","ASSUNTA":"Assunta","ATAHONA":"Atahona","AUSONIA":"Ausonia","AVELLANEDA":"Avellaneda","BALLESTEROS":"Ballesteros","BALLESTEROS SUD":"Ballesteros Sud","BALNEARIA":"Balnearia","BAÑADO DE SOTO":"Bañado de Soto","BELL VILLE":"Bell Ville","BENGOLEA":"Bengolea","BENJAMIN GOULD":"Benjamín Gould","BERROTARAN":"Berrotarán","BIALET MASSE":"Bialet Massé","BOUWER":"Bouwer","BRINKMANN":"Brinkmann","BUCHARDO":"Buchardo","BULNES":"Bulnes","CABALANGO":"Cabalango","CALCHIN":"Calchín","CALCHIN OESTE":"Calchín Oeste","CALMAYO":"Calmayo","CAMILO ALDAO":"Camilo Aldao","CAMINIAGA":"Caminiaga","CANALS":"Canals","CANDELARIA SUD":"Candelaria Sud","CAPILLA DE LOS REMEDIOS":"Capilla de los Remedios","CAPILLA DEL CARMEN":"Capilla del Carmen","CAPILLA DEL MONTE":"Capilla del Monte","CAPILLA DEL SITON":"Capilla del Sitón","CAPITAN GENERAL BERNARDO O'HIGGINS":"Capitán General Bernardo O'Higgins","CARNERILLO":"Carnerillo","CARRILOBO":"Carrilobo","CASA GRANDE":"Casa Grande","CAVANAGH":"Cavanagh","CAÑADA DE LUQUE":"Cañada de Luque","CAÑADA DE MACHADO":"Cañada de Machado","CAÑADA DE RIO PINTO":"Cañada de Río Pinto","CAÑADA DEL SAUCE":"Cañada del Sauce","CERRO COLORADO":"Cerro Colorado","CHAJAN":"Chaján","CHALACEA":"Chalacea","CHANCANI":"Chancaní","CHARBONIER":"Charbonier","CHARRAS":"Charras","CHAZON":"Chazón","CHAÑAR VIEJO":"Chañar Viejo","CHILIBROSTE":"Chilibroste","CHUCUL":"Chucul","CHURQUI CAÑADA":"Churqui Cañada","CHUÑA":"Chuña","CHUÑA HUASI":"Chuña Huasi","CIENAGA DEL CORO":"Ciénaga del Coro","CINTRA":"Cintra","COLAZO":"Colazo","COLONIA ALMADA":"Colonia Almada","COLONIA ANITA":"Colonia Anita","COLONIA BARGE":"Colonia Barge","COLONIA BISMARCK":"Colonia Bismarck","COLONIA BREMEN":"Colonia Bremen","COLONIA CAROYA":"Colonia Caroya","COLONIA ITALIANA":"Colonia Italiana","COLONIA ITURRASPE":"Colonia Iturraspe","COLONIA LAS CUATRO ESQUINAS":"Colonia Las Cuatro Esquinas","COLONIA LAS PICHANAS":"Colonia Las Pichanas","COLONIA MARINA":"Colonia Marina","COLONIA PROSPERIDAD":"Colonia Prosperidad","COLONIA SAN BARTOLOME":"Colonia San Bartolomé","COLONIA SAN PEDRO":"Colonia San Pedro","COLONIA TIROLESA":"Colonia Tirolesa","COLONIA VALTELINA":"Colonia Valtelina","COLONIA VICENTE AGUERO":"Colonia Vicente Agüero","COLONIA VIDELA":"Colonia Videla","COLONIA VIGNAUD":"Colonia Vignaud","COMECHINGONES":"Comechingones","CONLARA":"Conlara","COPACABANA":"Copacabana","CORDOBA":"Córdoba","CORONEL BAIGORRIA":"Coronel Baigorria","CORONEL MOLDES":"Coronel Moldes","CORRAL DE BUSTOS":"Corral de Bustos","CORRALITO":"Corralito","COSQUIN":"Cosquín","COSTASACATE":"Costasacate","CRUZ ALTA":"Cruz Alta","CRUZ DE CAÑA":"Cruz de Caña","CRUZ DEL EJE":"Cruz del Eje","CUESTA BLANCA":"Cuesta Blanca","DALMACIO VELEZ":"Dalmacio Vélez","DEAN FUNES":"Deán Funes","DEL CAMPILLO":"Del Campillo","DESPEÑADEROS":"Despeñaderos","DEVOTO":"Devoto","DIEGO DE ROJAS":"Diego de Rojas","DIQUE CHICO":"Dique Chico","EL ARAÑADO":"El Arañado","EL BRETE":"El Brete","EL CHACHO":"El Chacho","EL CRISPIN":"El Crispín","EL FORTIN":"El Fortín","EL MANZANO":"El Manzano","EL RASTREADOR":"El Rastreador","EL RODEO":"El Rodeo","EL TIO":"El Tío","ELENA":"Elena","EMBALSE":"Embalse","ESQUINA":"Esquina","ESTACION GENERAL PAZ":"Estación General Paz","ESTACION JUAREZ CELMAN":"Estación Juárez Celman","ESTANCIA DE GUADALUPE":"Estancia de Guadalupe","ESTANCIA VIEJA":"Estancia Vieja","ETRURIA":"Etruria","EUFRASIO LOZA":"Eufrasio Loza","FALDA DEL CARMEN":"Falda del Carmen","FREYRE":"Freyre","GENERAL BALDISSERA":"General Baldissera","GENERAL CABRERA":"General Cabrera","GENERAL DEHEZA":"General Deheza","GENERAL FOTHERINGHAM":"General Fotheringham","GENERAL LEVALLE":"General Levalle","GENERAL ROCA":"General Roca","GUANACO MUERTO":"Guanaco Muerto","GUASAPAMPA":"Guasapampa","GUATIMOZIN":"Guatimozín","GUTEMBERG":"Gutemberg","HERNANDO":"Hernando","HUANCHILLA":"Huanchilla","HUERTA GRANDE":"Huerta Grande","HUINCA RENANCO":"Huinca Renancó","IDIAZABAL":"Idiazábal","IMPIRA":"Impira","INRIVILLE":"Inriville","ISLA VERDE":"Isla Verde","ITALO":"Italó","JAMES CRAIK":"James Craik","JESUS MARIA":"Jesús María","JOVITA":"Jovita","JUSTINIANO POSSE":"Justiniano Posse","KILOMETRO 658":"Kilómetro 658","LA BATEA":"La Batea","LA CALERA":"La Calera","LA CARLOTA":"La Carlota","LA CAROLINA EL POTOSI":"La Carolina El Potosí","LA CAUTIVA":"La Cautiva","LA CESIRA":"La Cesira","LA CRUZ":"La Cruz","LA CUMBRE":"La Cumbre","LA CUMBRECITA":"La Cumbrecita","LA FALDA":"La Falda","LA FRANCIA":"La Francia","LA GRANJA":"La Granja","LA HIGUERA":"La Higuera","LA LAGUNA":"La Laguna","LA PAISANITA":"La Paisanita","LA PALESTINA":"La Palestina","LA PAMPA":"La Pampa","LA PAQUITA":"La Paquita","LA PARA":"La Para","LA PAZ":"La Paz","LA PLAYA":"La Playa","LA PLAYOSA":"La Playosa","LA POBLACION":"La Población","LA POSTA":"La Posta","LA PUERTA":"La Puerta","LA QUINTA":"La Quinta","LA RANCHERITA":"La Rancherita","LA RINCONADA":"La Rinconada","LA SERRANITA":"La Serranita","LA TORDILLA":"La Tordilla","LABORDE":"Laborde","LABOULAYE":"Laboulaye","LAGUNA LARGA":"Laguna Larga","LAS ACEQUIAS":"Las Acequias","LAS ALBAHACAS":"Las Albahacas","LAS ARRIAS":"Las Arrias","LAS BAJADAS":"Las Bajadas","LAS CALERAS":"Las Caleras","LAS CALLES":"Las Calles","LAS CAÑADAS":"Las Cañadas","LAS GRAMILLAS":"Las Gramillas","LAS HIGUERAS":"Las Higueras","LAS ISLETILLAS":"Las Isletillas","LAS JUNTURAS":"Las Junturas","LAS PALMAS":"Las Palmas","LAS PERDICES":"Las Perdices","LAS PEÑAS":"Las Peñas","LAS PEÑAS SUD":"Las Peñas Sud","LAS PLAYAS":"Las Playas","LAS RABONAS":"Las Rabonas","LAS SALADAS":"Las Saladas","LAS TAPIAS":"Las Tapias","LAS VARAS":"Las Varas","LAS VARILLAS":"Las Varillas","LAS VERTIENTES":"Las Vertientes","LEGUIZAMÓN":"Leguizamón","LEONES":"Leones","LOS CEDROS":"Los Cedros","LOS CERRILLOS":"Los Cerrillos","LOS CHAÑARITOS":"Los Chañaritos (Río Segundo)","LOS CHAÑARITOS (C.D.E.)":"Los Chañaritos (Cruz del Eje)","LOS CISNES":"Los Cisnes","LOS COCOS":"Los Cocos","LOS CONDORES":"Los Cóndores","LOS HORNILLOS":"Los Hornillos","LOS HOYOS":"Los Hoyos","LOS MISTOLES":"Los Mistoles","LOS MOLINOS":"Los Molinos","LOS POZOS":"Los Pozos","LOS REARTES":"Los Reartes","LOS SURGENTES":"Los Surgentes","LOS TALARES":"Los Talares","LOS ZORROS":"Los Zorros","LOZADA":"Lozada","LUCA":"Luca","LUCIO V. MANSILLA":"Lucio V. Mansilla","LUQUE":"Luque","LUTTI":"Lutti","LUYABA":"Luyaba","MALAGUEÑO":"Malagueño","MALENA":"Malena","MALVINAS ARGENTINAS":"Malvinas Argentinas","MANFREDI":"Manfredi","MAQUINISTA GALLINI":"Maquinista Gallini","MARCOS JUAREZ":"Marcos Juárez","MARULL":"Marull","MATORRALES":"Matorrales","MATTALDI":"Mattaldi","MAYU SUMAJ":"Mayu Sumaj","MEDIA NARANJA":"Media Naranja","MELO":"Melo","MENDIOLAZA":"Mendiolaza","MI GRANJA":"Mi Granja","MINA CLAVERO":"Mina Clavero","MIRAMAR":"Miramar","MONTE BUEY":"Monte Buey","MONTE CRISTO":"Monte Cristo","MONTE DE LOS GAUCHOS":"Monte de los Gauchos","MONTE LEÑA":"Monte Leña","MONTE MAIZ":"Monte Maíz","MONTE RALO":"Monte Ralo","MORRISON":"Morrison","MORTEROS":"Morteros","NICOLAS BRUZZONE":"Nicolás Bruzzone","NOETINGER":"Noetinger","NONO":"Nono","OBISPO TREJO":"Obispo Trejo","OLAETA":"Olaeta","OLIVA":"Oliva","OLIVARES DE SAN NICOLAS":"Olivares de San Nicolás","ONAGOITY":"Onagoity","ONCATIVO":"Oncativo","ORDOÑEZ":"Ordóñez","PACHECO DE MELO":"Pacheco de Melo","PAMPAYASTA NORTE":"Pampayasta Norte","PAMPAYASTA SUD":"Pampayasta Sud","PANAHOLMA":"Panaholma","PASCANAS":"Pascanas","PASCO":"Pasco","PASO DEL DURAZNO":"Paso del Durazno","PASO VIEJO":"Paso Viejo","PILAR":"Pilar","PINCEN":"Pincén","PIQUILLIN":"Piquillín","PLAZA DE MERCEDES":"Plaza de Mercedes","PLAZA LUXARDO":"Plaza Luxardo","PORTEÑA":"Porteña","POTRERO DE GARAY":"Potrero de Garay","POZO DEL MOLLE":"Pozo del Molle","POZO NUEVO":"Pozo Nuevo","PUEBLO ITALIANO":"Pueblo Italiano","PUESTO DE CASTRO":"Puesto de Castro","PUNTA DEL AGUA":"Punta del Agua","QUEBRACHO HERRADO":"Quebracho Herrado","QUILINO":"Quilino","RAFAEL GARCIA":"Rafael García","RANQUELES":"Ranqueles","RAYO CORTADO":"Rayo Cortado","REDUCCION":"Reducción","RINCON":"Rincón","RIO BAMBA":"Río Bamba","RIO CEBALLOS":"Río Ceballos","RIO CUARTO":"Río Cuarto","RIO DE LOS SAUCES":"Río de los Sauces","RIO PRIMERO":"Río Primero","RIO SEGUNDO":"Río Segundo","RIO TERCERO":"Río Tercero","ROSALES":"Rosales","ROSARIO DEL SALADILLO":"Rosario del Saladillo","SACANTA":"Sacanta","SAGRADA FAMILIA":"Sagrada Familia","SAIRA":"Saira","SALADILLO":"Saladillo","SALDAN":"Saldán","SALSACATE":"Salsacate","SALSIPUEDES":"Salsipuedes","SAMPACHO":"Sampacho","SAN AGUSTIN":"San Agustín","SAN ANTONIO DE ARREDONDO":"San Antonio de Arredondo","SAN ANTONIO DE LITIN":"San Antonio de Litín","SAN BASILIO":"San Basilio","SAN CARLOS MINAS":"San Carlos Minas","SAN CLEMENTE":"San Clemente","SAN ESTEBAN":"San Esteban","SAN FRANCISCO":"San Francisco","SAN FRANCISCO DEL CHAÑAR":"San Francisco del Chañar","SAN GERONIMO":"San Gerónimo","SAN IGNACIO":"San Ignacio","SAN JAVIER Y YACANTO":"San Javier y Yacanto","SAN JOAQUIN":"San Joaquín","SAN JOSE":"San José","SAN JOSE DE LA DORMIDA":"San José de la Dormida","SAN JOSE DE LAS SALINAS":"San José de las Salinas","SAN LORENZO":"San Lorenzo","SAN MARCOS SIERRAS":"San Marcos Sierras","SAN MARCOS SUD":"San Marcos Sud","SAN PEDRO":"San Pedro","SAN PEDRO NORTE":"San Pedro Norte","SAN ROQUE":"San Roque","SAN VICENTE":"San Vicente","SANTA CATALINA HOLMBERG":"Santa Catalina Holmberg","SANTA ELENA":"Santa Elena","SANTA EUFEMIA":"Santa Eufemia","SANTA MARIA DE PUNILLA":"Santa María de Punilla","SANTA ROSA DE CALAMUCHITA":"Santa Rosa de Calamuchita","SANTIAGO TEMPLE":"Santiago Temple","SARMIENTO":"Sarmiento","SATURNINO MARIA LASPIUR":"Saturnino María Laspiur","SAUCE ARRIBA":"Sauce Arriba","SEBASTIAN ELCANO":"Sebastián Elcano","SEEBER":"Seeber","SEGUNDA USINA":"Segunda Usina","SERRANO":"Serrano","SERREZUELA":"Serrezuela","SILVIO PELLICO":"Silvio Pellico","SIMBOLAR":"Simbolar","SINSACATE":"Sinsacate","SUCO":"Suco","TALA CAÑADA":"Tala Cañada","TALA HUASI":"Tala Huasi","TALAINI":"Talaini","TANCACHA":"Tancacha","TANTI":"Tanti","TICINO":"Ticino","TINOCO":"Tinoco","TIO PUJIO":"Tío Pujio","TOLEDO":"Toledo","TORO PUJIO":"Toro Pujio","TOSNO":"Tosno","TOSQUITA":"Tosquita","TRANSITO":"Tránsito","TUCLAME":"Tuclame","UCACHA":"Ucacha","UNQUILLO":"Unquillo","VALLE DE ANISACATE":"Valle de Anisacate","VALLE HERMOSO":"Valle Hermoso","VIAMONTE":"Viamonte","VICUNA MACKENNA":"Vicuña Mackenna","VILLA ALLENDE":"Villa Allende","VILLA AMANCAY":"Villa Amancay","VILLA ASCASUBI":"Villa Ascasubi","VILLA CANDELARIA NORTE":"Villa Candelaria Norte","VILLA CARLOS PAZ":"Villa Carlos Paz","VILLA CERRO AZUL":"Villa Cerro Azul","VILLA CIUDAD DE AMERICA":"Villa Ciudad de América","VILLA CIUDAD PARQUE LOS REARTES":"Villa Ciudad Parque Los Reartes","VILLA CONCEPCION DEL TIO":"Villa Concepción del Tío","VILLA CURA BROCHERO":"Villa Cura Brochero","VILLA DE LAS ROSAS":"Villa de las Rosas","VILLA DE MARIA":"Villa de María","VILLA DE POCHO":"Villa de Pocho","VILLA DE SOTO":"Villa de Soto","VILLA DEL DIQUE":"Villa del Dique","VILLA DEL PRADO":"Villa del Prado","VILLA DEL ROSARIO":"Villa del Rosario","VILLA DEL TOTORAL":"Villa del Totoral","VILLA DOLORES":"Villa Dolores","VILLA EL CHACAY":"Villa El Chacay","VILLA ELISA":"Villa Elisa","VILLA FONTANA":"Villa Fontana","VILLA GENERAL BELGRANO":"Villa General Belgrano","VILLA GIARDINO":"Villa Giardino","VILLA GUTIERREZ":"Villa Gutiérrez","VILLA HUIDOBRO":"Villa Huidobro","VILLA LA BOLSA":"Villa La Bolsa","VILLA LOS AROMOS":"Villa Los Aromos","VILLA LOS PATOS":"Villa Los Patos","VILLA MARIA":"Villa María","VILLA NUEVA":"Villa Nueva","VILLA PARQUE SANTA ANA":"Villa Parque Santa Ana","VILLA PARQUE SIQUIMAN":"Villa Parque Siquimán","VILLA QUILLINZO":"Villa Quillinzo","VILLA RIO ICHO CRUZ":"Villa Río Icho Cruz","VILLA ROSSI":"Villa Rossi","VILLA RUMIPAL":"Villa Rumipal","VILLA SAN ESTEBAN":"Villa San Esteban","VILLA SAN ISIDRO":"Villa San Isidro","VILLA SANTA CRUZ DEL LAGO":"Villa Santa Cruz del Lago","VILLA SANTA ROSA":"Villa Santa Rosa","VILLA SARMIENTO":"Villa Sarmiento (San Alberto)","VILLA SARMIENTO (G.R.)":"Villa Sarmiento (General Roca)","VILLA TULUMBA":"Villa Tulumba","VILLA VALERIA":"Villa Valeria","VILLA YACANTO":"Villa Yacanto","WASHINGTON":"Washington","WENCESLAO ESCALANTE":"Wenceslao Escalante"};
@@ -14,7 +33,6 @@ function dn(k){return NOMBRE_VIS[k]||k;}
 function depn(k){return DEPTO_VIS[k]||k;}
 const LOCS=Object.keys(DATA.localities).sort(function(a,b){return dn(a).localeCompare(dn(b),'es');});
 const REGIONS=[...new Set(LOCS.map(l=>DATA.localities[l].region_nombre))].sort();
-const RCOLORS=['#d4a017','#2d6a9f','#5a2db0','#9a2020','#1a6a3a','#8a1a50','#1a6060','#5a5a00','#4a1a8a'];
 
 
 // Helper para fuentes responsivas en Chart.js
@@ -336,7 +354,7 @@ function selectMun(name,featOrNull){
     const ppix=d80.pix>0?((d20.pix-d80.pix)/d80.pix*100).toFixed(1):null;
     const patron=clasificarPatron(name);
     document.getElementById('mapInfoContent').innerHTML=
-      '<div style="font-size:10px;color:var(--muted);margin-bottom:8px">'+depn(ld.dep)+' · <span class="badge '+RCLS[rid]+'">'+rlab(ld.region_nombre)+'</span></div>'+
+      '<div style="font-size:10px;color:var(--muted);margin-bottom:8px">'+depn(ld.dep)+' · '+regBadge(ld.region_nombre)+'</div>'+
       '<div class="map-info-row"><span>Población (censo 2022)</span><span>'+fmt(d20.pob)+'</span></div>'+
       '<div class="map-info-row"><span>Sup. construida 2020</span><span>'+fmt(d20.pix)+' ha</span></div>'+
       '<div class="map-info-row"><span>Dens. construida 2020</span><span>'+fmt(d20.den,1)+' m² BU/píxel</span></div>'+
@@ -425,7 +443,7 @@ function renderCharts(){
   var cn=document.getElementById('chartLocName');
   if(cn) cn.textContent=dn(loc);
   var cm=document.getElementById('chartLocMeta');
-  if(cm) cm.innerHTML='Dpto. '+depn(ld.dep)+' &nbsp;·&nbsp; <span class="badge '+RCLS[rid]+'">'+rlab(ld.region_nombre)+'</span>';
+  if(cm) cm.innerHTML='Dpto. '+depn(ld.dep)+' &nbsp;·&nbsp; '+regBadge(ld.region_nombre)+'';
   // Charts
   var inds=['pob','pix','den','nuc'];
   var ids=['chL1','chL2','chL3','chL4'];
@@ -501,17 +519,7 @@ function renderCharts(){
 // ══ ANÁLISIS REGIONAL ══
 var regYr = 2020;
 const RNAMES = Object.keys(DATA.regions);
-const RCOLORS_MAP = {
-  'Gran Córdoba':      '#e8a020',
-  'Ciudades +50,000':  '#2d6a9f',
-  'Valles Turisticos': '#7b4fcf',
-  'Región Norte':      '#c0392b',
-  'Región Oeste':      '#27ae60',
-  'Región Centro':     '#d35400',
-  'Región Este':       '#16a085',
-  'Región Sureste':    '#8e44ad',
-  'Región Sur':        '#2980b9'
-};
+const RCOLORS_MAP = REGION_COLORS;
 const IND_LABELS = {pob:'Población',pix:'Superficie construida',den:'Densidad construida',nuc:'Núcleos'};
 const IND_UNITS  = {pob:'habitantes',pix:'ha',den:'m² BU/píxel',nuc:'núcleos'};
 
@@ -709,7 +717,7 @@ function renderTbl(){
       var p=clasificarPatron(r.name);
       var cells='<td style="color:var(--muted);font-size:10px">'+(tblPage*perPage+i+1)+'</td>'+
         '<td class="td-n">'+dn(r.name)+'</td>'+
-        '<td><span class="badge '+RCLS[r.region_id||1]+'">'+rlab(r.region_nombre)+'</span></td>'+
+        '<td>'+regBadge(r.region_nombre)+'</td>'+
         '<td style="font-size:10px;font-weight:700;color:'+(p?p.color:'#888')+'">'+(p?p.label:'—')+'</td>'+
         [1980,1990,2000,2010,2020].map(function(y){
           var d=DATA.localities[r.name].data[y]||{};
@@ -734,7 +742,7 @@ function renderTbl(){
       tr.onclick=()=>jumpToLoc(r.name);
       tr.innerHTML='<td style="color:var(--muted);font-size:10px">'+(tblPage*perPage+i+1)+'</td>'+
         '<td class="td-n">'+dn(r.name)+'</td><td style="color:var(--muted);font-size:10px">'+depn(r.dep)+'</td>'+
-        '<td><span class="badge '+RCLS[rid]+'">'+rlab(r.region_nombre)+'</span></td>'+
+        '<td>'+regBadge(r.region_nombre)+'</td>'+
         '<td style="color:'+yc+';font-variant-numeric:tabular-nums">'+fmt(r.pob)+'</td>'+
         '<td style="color:'+yc+';font-variant-numeric:tabular-nums">'+fmt(r.pix)+'</td>'+
         '<td style="color:'+yc+';font-variant-numeric:tabular-nums">'+fmt(r.den,1)+'</td>'+
@@ -820,7 +828,7 @@ function buildCmpCards(){
     if(!loc||!DATA.localities[loc]){el.innerHTML='<p style="color:var(--muted);font-size:11px;text-align:center;padding:14px">Seleccioná una localidad</p>';return;}
     const ld=DATA.localities[loc],rid=ld.region_id||1;
     var p=clasificarPatron(loc);
-    el.innerHTML='<div style="font-size:10px;color:var(--muted);margin-bottom:8px">'+depn(ld.dep)+' · <span class="badge '+RCLS[rid]+'">'+rlab(ld.region_nombre)+'</span></div>'+
+    el.innerHTML='<div style="font-size:10px;color:var(--muted);margin-bottom:8px">'+depn(ld.dep)+' · '+regBadge(ld.region_nombre)+'</div>'+
       '<div style="font-size:10px;font-weight:700;color:'+(p?p.color:'#888')+';margin-bottom:6px">'+(p?'Patrón: '+p.label:'')+'</div>'+
       YEARS.map(function(y){const d=ld.data[y]||{};return'<div class="cmp-row"><span style="font-size:10px;font-weight:700;color:'+YC[y]+'">'+y+'</span><span style="font-size:11px">'+fmt(d.pob)+' hab &nbsp;·&nbsp; '+fmt(d.pix)+' ha</span></div>';}).join('');
   });
@@ -871,8 +879,10 @@ function renderCmpChart(){
   killChart('cmpRel');
   var ind=document.getElementById('cmpInd').value;
   var norm=(cmpEsc==='norm');
-  var colors=['#d4a017','#2d6a9f','#5a2db0'];
-  var RCOLORS3=['#e8a020','#2d6a9f','#7b4fcf'];
+  // Regiones: su color de REGION_COLORS. Localidades: tinta con trazos distintos (no son regiones).
+  var INK=['#1a1a1a','#5c5c52','#8f8b7c'], DASH=[[],[7,4],[2,3]];
+  function lineCol(sel,i){ return cmpModo==='region'?(REGION_COLORS[sel]||'#888'):INK[i]; }
+  function lineDash(i){ return cmpModo==='region'?[]:DASH[i]; }
 
   // Determine sources (localities or regions)
   var sels = cmpModo==='region' ? cmpRegSels : cmpSels;
@@ -890,7 +900,7 @@ function renderCmpChart(){
         if(norm) return base>0?parseFloat((v/base*100).toFixed(2)):0;
         return v;
       }),
-      borderColor:colors[i],
+      borderColor:lineCol(sel,i),borderDash:lineDash(i),
       backgroundColor:'transparent',
       tension:.35,
       pointBackgroundColor:YEARS.map(function(y){return YC[y]||'#888';}),
@@ -937,7 +947,7 @@ function renderCmpChart(){
         var val=getData(sel,y);
         return base>0?parseFloat(((val-base)/base*100).toFixed(2)):0;
       }),
-      borderColor:colors[i],backgroundColor:colors[i]+'22',
+      borderColor:lineCol(sel,i),borderDash:lineDash(i),backgroundColor:lineCol(sel,i)+'1a',
       tension:.35,
       pointBackgroundColor:YEARS.map(function(y){return YC[y]||'#888';}),
       pointBorderColor:YEARS.map(function(y){return YC[y]||'#888';}),
