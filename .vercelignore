@@ -1,0 +1,7 @@
+# No se publican: herramientas, documentación interna y scripts
+tools/
+docs/
+*.sh
+*.mbtiles
+README.md
+CHANGELOG.md
