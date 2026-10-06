@@ -461,15 +461,15 @@ function selectMun(name,featOrNull){
       '<div style="font-size:10px;color:var(--muted);margin-bottom:8px">'+depn(ld.dep)+' · '+regBadge(ld.region_nombre)+'</div>'+
       '<div class="map-info-row"><span>Población (censo 2022)</span><span>'+fmt(d20.pob)+'</span></div>'+
       '<div class="map-info-row"><span>Sup. construida 2020</span><span>'+fmt(d20.pix)+' ha</span></div>'+
-      '<div class="map-info-row"><span>Dens. construida 2020</span><span>'+fmt(d20.den,1)+' m² BU/píxel</span></div>'+
-      '<div class="map-info-row"><span>Núcleos 2020</span><span>'+fmt(d20.nuc)+'</span></div>'+
+      '<div class="map-info-row"><span>Dens. construida 2020 '+glosBtn('bu')+'</span><span>'+fmt(d20.den,1)+' m² BU/píxel</span></div>'+
+      '<div class="map-info-row"><span>Núcleos 2020 '+glosBtn('nucleos')+'</span><span>'+fmt(d20.nuc)+'</span></div>'+
       '<div class="map-info-row" style="margin-top:4px;padding-top:4px;border-top:2px solid var(--border)">'+
         '<span>Crec. pob. 1980–2022</span><span style="color:'+(p&&parseFloat(p)>=0?'#1a7a1a':'#7a1a1a')+';font-weight:700">'+fmtPct(p)+'</span>'+
       '</div>'+
       '<div class="map-info-row">'+
         '<span>Crec. sup. 1980–2020</span><span style="color:'+(ppix&&parseFloat(ppix)>=0?'#1a7a1a':'#7a1a1a')+';font-weight:700">'+fmtPct(ppix)+'</span>'+
       '</div>'+
-      (patron?'<div class="map-info-row" style="margin-top:4px"><span>Patrón</span><span>'+patronBadge(patron)+'</span></div>':'')+
+      (patron?'<div class="map-info-row" style="margin-top:4px"><span>Patrón '+glosBtn(patron.label)+'</span><span>'+patronBadge(patron)+'</span></div>':'')+
       rankingHTML(name)+
       '<div class="nota-chart">Población: censos 1980–2022 · superficie: GHSL 1980–2020.</div>'+
       '<div class="ficha-acciones">'+
@@ -867,7 +867,7 @@ function renderTbl(){
   // Clase en <table> para ocultar columnas en mobile vía CSS
   document.getElementById('mainTable').className=tblModo==='evo'?'tbl-evo':'tbl-normal';
   if(tblModo==='evo'){
-    if(thead) thead.innerHTML='<tr><th>#</th><th>Localidad</th><th>Región</th><th>Patrón</th>'+
+    if(thead) thead.innerHTML='<tr><th>#</th><th>Localidad</th><th>Región</th><th>Patrón '+glosBtn('patrones')+'</th>'+
       [1980,1990,2000,2010,2020].map(function(y){return '<th style="border-top:3px solid '+YC[y]+';text-align:right">Pob. '+CENSO[y]+'</th><th style="border-top:3px solid '+YC[y]+';text-align:right">Sup. '+y+' (ha)</th>';}).join('')+'</tr>';
     slice.forEach(function(r,i){
       var p=clasificarPatron(r.name);
@@ -886,7 +886,7 @@ function renderTbl(){
     if(thead) thead.innerHTML='<tr><th>#</th><th>Localidad</th><th>Dpto.</th><th>Región</th>'+
       '<th onclick="setSortCol(\'pob\')">Población (censo '+CENSO[tblYr]+')</th><th onclick="setSortCol(\'pix\')">Sup. (ha)</th>'+
       '<th onclick="setSortCol(\'den\')" title="Densidad construida: m² BU por píxel">Dens. (m² BU/píxel)</th><th onclick="setSortCol(\'nuc\')">Núcleos</th>'+
-      '<th>Crec.Pob%</th><th>Crec.Sup%</th><th>Patrón</th><th>Mapa</th></tr>';
+      '<th>Crec.Pob%</th><th>Crec.Sup%</th><th>Patrón '+glosBtn('patrones')+'</th><th>Mapa</th></tr>';
     slice.forEach((r,i)=>{
       const rid=r.region_id||1;
       var d80=DATA.localities[r.name].data[1980]||{};
@@ -2089,10 +2089,72 @@ function setChoro(ind){
   var cnt={}, sin=0;
   LOCS.forEach(function(k){ var c=_choroClase(choroInd,CHORO[choroInd].valor(k)); if(c<0) sin++; else cnt[c]=(cnt[c]||0)+1; });
   leg.style.display='block';
-  leg.innerHTML='<div class="choro-t">'+CHORO[choroInd].titulo+'</div>'+CHORO[choroInd].clases.map(function(c,i){
-      return '<div class="choro-i"><i style="background:'+c.color+'"></i><span>'+c.label+'</span><b>'+(cnt[i]||0)+'</b></div>'; }).join('')+
+  leg.innerHTML='<div class="choro-t">'+CHORO[choroInd].titulo+(choroInd==='lcr'?' '+glosBtn('lcrpgr'):choroInd==='patron'?' '+glosBtn('patrones'):'')+'</div>'+CHORO[choroInd].clases.map(function(c,i){
+      return '<div class="choro-i"><i style="background:'+c.color+'"></i><span>'+c.label+(choroInd==='patron'?' '+glosBtn(c.label):'')+'</span><b>'+(cnt[i]||0)+'</b></div>'; }).join('')+
     (sin?'<div class="choro-i"><i style="background:'+CHORO_SIN+'"></i><span>sin dato o no definido</span><b>'+sin+'</b></div>':'');
 }
+
+// ══ GLOSARIO EMERGENTE (i) ══
+// Definiciones tomadas de Metodología y de los cálculos del panel (clasificarPatron, LCRPGR).
+var GLOSARIO={
+  bu:{t:'BU · superficie construida por píxel',
+      d:'Valor de cada celda de 100 × 100 m de la capa GHS-BUILT-S (GHSL): metros cuadrados construidos dentro de la celda, de 0 a 10.000. Se descartan los píxeles con BU < 10. La densidad construida de una localidad es el promedio de BU de sus píxeles construidos.',
+      f:'Densidad construida = Σ BU / n.º de píxeles construidos   (m² BU/píxel)'},
+  nucleos:{t:'Núcleos de construcción',
+      d:'Cantidad de manchas de píxeles construidos separadas entre sí dentro de cada localidad. Más núcleos con la misma superficie indica un crecimiento más fragmentado.',
+      f:'Índice de fragmentación = núcleos / píxeles construidos × 100'},
+  lcrpgr:{t:'LCRPGR · ODS 11.3.1',
+      d:'Relación entre la tasa de consumo de suelo y la tasa de crecimiento de la población (ONU-Hábitat). Mayor que 1: el suelo construido crece más rápido que la población. No se define si la población no crece.',
+      f:'LCRPGR = LCR / PGR,  LCR = ln(Sup₂₀₂₀ / Sup₁₉₈₀) / t,  PGR = ln(Pob₂₀₂₂ / Pob₁₉₈₀) / t'},
+  patrones:{t:'Patrones de crecimiento 1980–2020',
+      d:'Cada localidad se clasifica comparando la variación de su población (gp, censos 1980–2022) con la de su superficie construida (gs, GHSL 1980–2020). Las reglas se aplican en este orden: En declive, Compacta, Sprawl moderado, Sprawl acelerado, Dispersión intensa. Sin población o superficie en 1980 no se clasifica.',
+      f:'r = gs / máx(|gp|, 1)'},
+  'En declive':{t:'Patrón · En declive',d:'La población cayó más de un 5 % entre 1980 y 2022, con independencia de lo que pasó con la superficie construida.',f:'gp < −5 %'},
+  'Compacta':{t:'Patrón · Compacta',d:'La población creció al menos al 80 % del ritmo de la superficie construida: la mancha urbana acompaña al crecimiento demográfico.',f:'gp ≥ 0,8 × gs'},
+  'Sprawl moderado':{t:'Patrón · Sprawl moderado',d:'La superficie construida creció más que la población, hasta el doble.',f:'r < 2'},
+  'Sprawl acelerado':{t:'Patrón · Sprawl acelerado',d:'La superficie construida creció entre 2 y 4 veces lo que creció la población.',f:'2 ≤ r < 4'},
+  'Dispersión intensa':{t:'Patrón · Dispersión intensa',d:'La superficie construida creció 4 veces o más que la población.',f:'r ≥ 4'}
+};
+function glosBtn(k){
+  var e=GLOSARIO[k]; if(!e) return '';
+  return '<button type="button" class="gl-i" data-glos="'+k.replace(/"/g,'&quot;')+'" aria-label="Qué significa: '+e.t+'" aria-expanded="false" aria-controls="glosPop">i</button>';
+}
+(function(){
+  var pop=null, owner=null;
+  function cerrar(volverFoco){
+    if(!pop||pop.hidden) return;
+    pop.hidden=true;
+    if(owner){ owner.setAttribute('aria-expanded','false'); if(volverFoco) owner.focus(); }
+    owner=null;
+  }
+  function abrir(btn){
+    var e=GLOSARIO[btn.getAttribute('data-glos')]; if(!e) return;
+    if(owner===btn){ cerrar(true); return; }
+    cerrar(false);
+    pop.innerHTML='<div class="gl-head"><strong id="glosTit">'+e.t+'</strong><button type="button" class="gl-x" aria-label="Cerrar">✕</button></div>'+
+      '<p>'+e.d+'</p>'+(e.f?'<code>'+e.f+'</code>':'');
+    pop.hidden=false; owner=btn; btn.setAttribute('aria-expanded','true');
+    var r=btn.getBoundingClientRect(), w=Math.min(320,window.innerWidth-24);
+    pop.style.width=w+'px';
+    var left=Math.min(Math.max(12,r.left+r.width/2-w/2),window.innerWidth-w-12);
+    var top=r.bottom+8; if(top+pop.offsetHeight>window.innerHeight-12) top=Math.max(12,r.top-pop.offsetHeight-8);
+    pop.style.left=left+'px'; pop.style.top=top+'px';
+    pop.querySelector('.gl-x').focus();
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    pop=document.createElement('div'); pop.id='glosPop'; pop.className='gl-pop'; pop.setAttribute('role','dialog'); pop.setAttribute('aria-labelledby','glosTit'); pop.hidden=true;
+    document.body.appendChild(pop);
+    document.addEventListener('click',function(ev){
+      var b=ev.target.closest&&ev.target.closest('.gl-i');
+      if(b){ ev.preventDefault(); ev.stopPropagation(); abrir(b); return; }
+      if(ev.target.closest&&ev.target.closest('.gl-x')){ cerrar(true); return; }
+      if(pop&&!pop.hidden&&!pop.contains(ev.target)) cerrar(false);
+    },true);
+    document.addEventListener('keydown',function(ev){ if(ev.key==='Escape') cerrar(true); });
+    window.addEventListener('scroll',function(){ cerrar(false); },true);
+    window.addEventListener('resize',function(){ cerrar(false); });
+  });
+})();
 
 // ══ MAP DOWNLOAD FROM DRIVE ══
 var DRIVE_FOLDER = '1GSGLTnf-798G4vggjE7BbhgAr6PVCVEN';
