@@ -1761,7 +1761,8 @@ function renderCharts(){
         },
         scales:{
           x:{type:'linear',min:1978,max:2022,
-            ticks:{color:'#888879',font:{family:'Space Mono',size:10},stepSize:10,callback:function(v){return v%10===0?(ind==='pob'?CENSO[v]:v):'';}},
+            afterBuildTicks:function(ax){ax.ticks=YEARS.map(function(v){return {value:v};});},
+            ticks:{color:'#888879',font:{family:'Space Mono',size:10},stepSize:10,callback:function(v){return ind==='pob'?CENSO[v]:v;}},
             grid:{color:'rgba(0,0,0,.05)'}},
           y:{beginAtZero:true,
             ticks:{color:'#888879',font:{family:'Space Mono',size:10},maxTicksLimit:5,callback:function(v){return fmt(v,ind==='den'?1:0);}},
