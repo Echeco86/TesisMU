@@ -1722,6 +1722,8 @@ function _ensureDeck(cb){
   if(_deckPending.length>1) return; // ya hay una carga en progreso
   var s=document.createElement('script');
   s.src='https://unpkg.com/deck.gl@8.9.35/dist.min.js';
+  s.integrity='sha384-3nvwSk2Fxpw61RPr5Tnc6mHNuWAxEppaSbRUJe1Y+Qeggt50+j9Qvcxw0kCBYWD5';
+  s.crossOrigin='anonymous';
   s.onload=function(){ _deckReady=true; _deckPending.forEach(function(f){f();}); _deckPending=[]; };
   s.onerror=function(){
     _deckPending=[]; is3D=false;
