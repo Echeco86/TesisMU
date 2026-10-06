@@ -99,6 +99,13 @@ select:focus,input:focus{border-color:var(--text)}
 }
 .map-sidebar{position:absolute;top:10px;left:10px;z-index:1000;width:220px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:calc(100% - 20px);font-size:12px}
 .map-sheet-toggle{display:none}
+.choro-t{font-size:10px;font-weight:700;margin:8px 0 5px;line-height:1.4}
+.choro-i{display:grid;grid-template-columns:12px 1fr auto;gap:6px;align-items:center;font-size:10px;padding:1px 0}
+.choro-i i{width:12px;height:12px;border-radius:2px;border:1px solid rgba(0,0,0,.12)}
+.choro-i b{color:var(--muted);font-weight:400;font-variant-numeric:tabular-nums}
+.choro-pop .maplibregl-popup-content{font-family:'Space Mono',monospace;font-size:11px;padding:6px 9px;border-radius:5px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.pat-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--text)}
+.pat-badge i{width:9px;height:9px;border-radius:2px;flex-shrink:0}
 .map-panel{background:rgba(255,255,255,0.95);border:1px solid var(--border);border-radius:8px;padding:10px;box-shadow:0 2px 12px rgba(0,0,0,.15);backdrop-filter:blur(4px)}
 .map-panel h4{font-family:'Fraunces',serif;font-size:13px;font-weight:700;margin-bottom:9px;padding-bottom:5px;border-bottom:1px solid var(--border)}
 #map{position:absolute;inset:0;}
@@ -909,6 +916,17 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
           <h4>Buscar Municipio</h4>
           <input type="search" id="mapSearch" aria-label="Buscar municipio o comuna en el mapa" placeholder="Buscar localidad..." oninput="filterMapSearch(this.value)" style="width:100%;margin-bottom:8px">
           <div id="mapMunList" style="max-height:120px;overflow-y:auto;font-size:11px"></div>
+        </div>
+        <div class="map-panel" id="choroPanel">
+          <h4>Colorear municipios</h4>
+          <label class="ctrl-lbl" for="choroSel">Indicador</label>
+          <select id="choroSel" onchange="setChoro(this.value)" style="width:100%;margin-top:3px">
+            <option value="">Ninguno</option>
+            <option value="patron">Patrón de crecimiento</option>
+            <option value="gpob">Variación de población</option>
+            <option value="lcr">LCRPGR</option>
+          </select>
+          <div id="choroLegend" style="display:none"></div>
         </div>
         <div class="map-panel" id="densLegend" style="display:none">
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;color:var(--muted)">Leyenda de densidad</div>

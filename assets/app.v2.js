@@ -340,6 +340,8 @@ function _createMap(style){
     // Contorno provincial, por encima de la densidad
     _addProvinciaLayer();
     // Fill invisible solo para capturar eventos de puntero
+    // Coroplético (debajo de la densidad); se activa con el selector "Colorear municipios por"
+    _choroAddLayer(); if(choroInd) setChoro(choroInd);
     map.addLayer({id:'muni-interact',type:'fill',source:'municipios',paint:{'fill-color':'#000','fill-opacity':0}});
     // Resaltado hover
     map.addLayer({id:'muni-hover',type:'line',source:'municipios',paint:{'line-color':'#1a1a1a','line-width':1.4,'line-opacity':0.55},filter:['==','NOMBRE','']});
@@ -356,6 +358,13 @@ function _createMap(style){
         map.getCanvas().style.cursor='pointer';
       }
     });
+    var choroPop=new maplibregl.Popup({closeButton:false,closeOnClick:false,className:'choro-pop',offset:10});
+    map.on('mousemove','muni-interact',function(e){
+      if(!choroInd||!e.features.length){ choroPop.remove(); return; }
+      var k=e.features[0].properties.NOMBRE, v=DATA.localities[k]?CHORO[choroInd].valor(k):null;
+      choroPop.setLngLat(e.lngLat).setHTML('<strong>'+dn(k)+'</strong><br>'+(v==null?'sin dato':CHORO[choroInd].fmt(v))).addTo(map);
+    });
+    map.on('mouseleave','muni-interact',function(){ choroPop.remove(); });
     map.on('mouseleave','muni-interact',function(){
       map.setFilter('muni-hover',['==','NOMBRE','']);
       map.getCanvas().style.cursor='';
@@ -460,7 +469,7 @@ function selectMun(name,featOrNull){
       '<div class="map-info-row">'+
         '<span>Crec. sup. 1980–2020</span><span style="color:'+(ppix&&parseFloat(ppix)>=0?'#1a7a1a':'#7a1a1a')+';font-weight:700">'+fmtPct(ppix)+'</span>'+
       '</div>'+
-      (patron?'<div class="map-info-row" style="margin-top:4px"><span>Patrón</span><span style="font-size:10px;font-weight:700;color:'+patron.color+'">'+patron.label+'</span></div>':'')+
+      (patron?'<div class="map-info-row" style="margin-top:4px"><span>Patrón</span><span>'+patronBadge(patron)+'</span></div>':'')+
       rankingHTML(name)+
       '<div class="nota-chart">Población: censos 1980–2022 · superficie: GHSL 1980–2020.</div>'+
       '<div class="ficha-acciones">'+
@@ -865,7 +874,7 @@ function renderTbl(){
       var cells='<td style="color:var(--muted);font-size:10px">'+(tblPage*perPage+i+1)+'</td>'+
         '<td class="td-n">'+dn(r.name)+'</td>'+
         '<td>'+regBadge(r.region_nombre)+'</td>'+
-        '<td style="font-size:10px;font-weight:700;color:'+(p?p.color:'#888')+'">'+(p?p.label:'—')+'</td>'+
+        '<td>'+patronBadge(p)+'</td>'+
         [1980,1990,2000,2010,2020].map(function(y){
           var d=DATA.localities[r.name].data[y]||{};
           return '<td style="text-align:right;color:'+YC[y]+';font-variant-numeric:tabular-nums">'+fmt(d.pob||0)+'</td>'+
@@ -896,7 +905,7 @@ function renderTbl(){
         '<td style="color:'+yc+';font-variant-numeric:tabular-nums">'+fmt(r.nuc)+'</td>'+
         '<td style="font-size:11px;color:'+(gp&&parseFloat(gp)>=0?'#1a7a1a':'#7a1a1a')+';font-weight:700">'+fmtPct(gp)+'</td>'+
         '<td style="font-size:11px;color:'+(gpx&&parseFloat(gpx)>=0?'#1a7a1a':'#7a1a1a')+';font-weight:700">'+fmtPct(gpx)+'</td>'+
-        '<td style="font-size:10px;font-weight:700;color:'+(p?p.color:'#888')+'">'+(p?p.label:'—')+'</td>'+
+        '<td>'+patronBadge(p)+'</td>'+
         '<td onclick="event.stopPropagation()" style="text-align:center">'+
           '<button onclick="downloadMapPDF(\''+r.name.replace(/'/g,"\\'")+'\',' +
             '\''+r.region_nombre.replace(/'/g,"\\'")+'\''+
@@ -979,7 +988,7 @@ function buildCmpCards(){
     const ld=DATA.localities[loc],rid=ld.region_id||1;
     var p=clasificarPatron(loc);
     el.innerHTML='<div style="font-size:10px;color:var(--muted);margin-bottom:8px">'+depn(ld.dep)+' · '+regBadge(ld.region_nombre)+'</div>'+
-      '<div style="font-size:10px;font-weight:700;color:'+(p?p.color:'#888')+';margin-bottom:6px">'+(p?'Patrón: '+p.label:'')+'</div>'+
+      '<div style="font-size:10px;margin-bottom:6px">'+(p?'Patrón: '+patronBadge(p):'')+'</div>'+
       YEARS.map(function(y){const d=ld.data[y]||{};return'<div class="cmp-row"><span style="font-size:10px;font-weight:700;color:'+YC[y]+'">'+y+'</span><span style="font-size:11px">'+fmt(d.pob)+' hab &nbsp;·&nbsp; '+fmt(d.pix)+' ha</span></div>';}).join('');
   });
 }
@@ -1428,7 +1437,10 @@ function buildAnalisis(){
 
 // ── Distribución de patrones de crecimiento (1980→2020) ──
 var PATRON_ORDER=['Compacta','Sprawl moderado','Sprawl acelerado','Dispersión intensa','En declive'];
-var PATRON_COLORS={'Compacta':'#1a7a1a','Sprawl moderado':'#a07010','Sprawl acelerado':'#c03010','Dispersión intensa':'#7a0010','En declive':'#7a1a1a'};
+// Patrones: rampa de un tono de menor a mayor dispersión (validada como ordinal) y "En declive" en azul aparte.
+var PATRON_COLORS={'Compacta':'#db9d6a','Sprawl moderado':'#d2713a','Sprawl acelerado':'#bc4527','Dispersión intensa':'#901e21','En declive':'#3275b4'};
+// Chip de patrón: texto en tinta y punto de color (el color es de relleno, no de texto)
+function patronBadge(p){ return p?'<span class="pat-badge"><i style="background:'+p.color+'"></i>'+p.label+'</span>':'—'; }
 
 function buildPatrones(){
   var cv=document.getElementById('chPatrones'); if(!cv) return;
@@ -1660,12 +1672,12 @@ function clasificarPatron(loc){
   if(!d80||!d20||!d80.pob||!d80.pix||!d20.pob||!d20.pix) return null;
   var gpob=(d20.pob-d80.pob)/d80.pob*100;
   var gpix=(d20.pix-d80.pix)/d80.pix*100;
-  if(gpob<-5) return {label:'En declive',color:'#7a1a1a'};
+  if(gpob<-5) return {label:'En declive',color:PATRON_COLORS['En declive']};
   var ratio=gpix/Math.max(Math.abs(gpob),1);
-  if(gpob>=gpix*0.8) return {label:'Compacta',color:'#1a7a1a'};
-  if(ratio<2) return {label:'Sprawl moderado',color:'#a07010'};
-  if(ratio<4) return {label:'Sprawl acelerado',color:'#c03010'};
-  return {label:'Dispersión intensa',color:'#7a0010'};
+  if(gpob>=gpix*0.8) return {label:'Compacta',color:PATRON_COLORS['Compacta']};
+  if(ratio<2) return {label:'Sprawl moderado',color:PATRON_COLORS['Sprawl moderado']};
+  if(ratio<4) return {label:'Sprawl acelerado',color:PATRON_COLORS['Sprawl acelerado']};
+  return {label:'Dispersión intensa',color:PATRON_COLORS['Dispersión intensa']};
 }
 
 // Mejora #7: Índice de fragmentación (núcleos por 100 píxeles)
@@ -2011,6 +2023,76 @@ function _setSwipe(f){
     window.addEventListener('resize',function(){ if(_cmp) _setSwipe(wrap._f||0.5); });
   });
 })();
+
+// ══ COROPLÉTICO DE LOS 427 MUNICIPIOS ══
+// Indicadores por localidad (sin modificar DATA): patrón, variación de población y LCRPGR.
+// LCRPGR = ln(sup2020/sup1980) / ln(pob2022/pob1980): mismo cálculo que el gráfico regional
+// (el divisor de años se cancela); no se define si la población no crece o falta un dato.
+var CHORO_SIN='#ebe8df';
+var CHORO={
+  patron:{titulo:'Patrón de crecimiento 1980–2020',
+    valor:function(k){ var p=clasificarPatron(k); return p?p.label:null; },
+    clases:PATRON_ORDER.map(function(o){ return {label:o,color:PATRON_COLORS[o],test:function(v){return v===o;}}; }),
+    fmt:function(v){ return v; }},
+  gpob:{titulo:'Variación de población 1980–2022',
+    valor:function(k){ var a=(DATA.localities[k].data[1980]||{}).pob, b=(DATA.localities[k].data[2020]||{}).pob; return a>0&&b!=null?(b-a)/a*100:null; },
+    clases:[
+      {label:'menos de −20 %',color:'#0c60a3',test:function(v){return v<-20;}},
+      {label:'−20 a −5 %',color:'#6d9dce',test:function(v){return v<-5;}},
+      {label:'−5 a +5 % (estable)',color:'#d7d7d7',test:function(v){return v<=5;}},
+      {label:'+5 a +50 %',color:'#db9d6a',test:function(v){return v<=50;}},
+      {label:'+50 a +100 %',color:'#d07135',test:function(v){return v<=100;}},
+      {label:'+100 a +200 %',color:'#b44723',test:function(v){return v<=200;}},
+      {label:'más de +200 %',color:'#892b20',test:function(){return true;}}],
+    fmt:function(v){ return fmtPct(v); }},
+  lcr:{titulo:'LCRPGR 1980–2020 (consumo de suelo / crecimiento poblacional)',
+    valor:function(k){ var a=DATA.localities[k].data[1980]||{}, b=DATA.localities[k].data[2020]||{};
+      if(!(a.pob>0&&b.pob>0&&a.pix>0&&b.pix>0)) return null; var pg=Math.log(b.pob/a.pob); return pg>0?Math.log(b.pix/a.pix)/pg:null; },
+    clases:[
+      {label:'menos de 0,5 (compacto)',color:'#0c60a3',test:function(v){return v<0.5;}},
+      {label:'0,5 a 0,9',color:'#6d9dce',test:function(v){return v<0.9;}},
+      {label:'0,9 a 1,1 (equilibrio)',color:'#d7d7d7',test:function(v){return v<=1.1;}},
+      {label:'1,1 a 2',color:'#d07135',test:function(v){return v<=2;}},
+      {label:'2 a 4',color:'#b44723',test:function(v){return v<=4;}},
+      {label:'más de 4',color:'#892b20',test:function(){return true;}}],
+    fmt:function(v){ return fmtNum(v,2); }}
+};
+var choroInd='';
+function _choroClase(ind,v){ if(v==null) return -1; var cs=CHORO[ind].clases; for(var i=0;i<cs.length;i++) if(cs[i].test(v)) return i; return -1; }
+// Agrega a cada polígono el índice de clase de cada indicador (propiedades _c_patron, _c_gpob, _c_lcr)
+function _choroData(){
+  return {type:'FeatureCollection',features:MUNICIPIOS_GJ.features.map(function(f){
+    var k=f.properties.NOMBRE, pr=Object.assign({},f.properties);
+    Object.keys(CHORO).forEach(function(ind){ pr['_c_'+ind]=DATA.localities[k]?_choroClase(ind,CHORO[ind].valor(k)):-1; });
+    return {type:'Feature',properties:pr,geometry:f.geometry};
+  })};
+}
+function _choroAddLayer(){
+  map.addSource('muni-choro-src',{type:'geojson',data:_choroData()});
+  map.addLayer({id:'muni-choro',type:'fill',source:'muni-choro-src',layout:{visibility:'none'},paint:{'fill-color':CHORO_SIN,'fill-opacity':0.78}},
+    map.getLayer('provincia-limite')?'provincia-limite':'muni-outline');
+}
+function setChoro(ind){
+  choroInd=ind||'';
+  var leg=document.getElementById('choroLegend');
+  if(map&&map.getLayer('muni-choro')){
+    if(!choroInd){ map.setLayoutProperty('muni-choro','visibility','none'); }
+    else {
+      var expr=['match',['get','_c_'+choroInd]];
+      CHORO[choroInd].clases.forEach(function(c,i){ expr.push(i,c.color); }); expr.push(CHORO_SIN);
+      map.setPaintProperty('muni-choro','fill-color',expr);
+      map.setLayoutProperty('muni-choro','visibility','visible');
+    }
+  }
+  if(!leg) return;
+  if(!choroInd){ leg.innerHTML=''; leg.style.display='none'; return; }
+  var cnt={}, sin=0;
+  LOCS.forEach(function(k){ var c=_choroClase(choroInd,CHORO[choroInd].valor(k)); if(c<0) sin++; else cnt[c]=(cnt[c]||0)+1; });
+  leg.style.display='block';
+  leg.innerHTML='<div class="choro-t">'+CHORO[choroInd].titulo+'</div>'+CHORO[choroInd].clases.map(function(c,i){
+      return '<div class="choro-i"><i style="background:'+c.color+'"></i><span>'+c.label+'</span><b>'+(cnt[i]||0)+'</b></div>'; }).join('')+
+    (sin?'<div class="choro-i"><i style="background:'+CHORO_SIN+'"></i><span>sin dato o no definido</span><b>'+sin+'</b></div>':'');
+}
 
 // ══ MAP DOWNLOAD FROM DRIVE ══
 var DRIVE_FOLDER = '1GSGLTnf-798G4vggjE7BbhgAr6PVCVEN';
