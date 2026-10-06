@@ -168,6 +168,9 @@ select:focus,input:focus{border-color:var(--text)}
 .kd.up{background:#e6fce6;color:#1a7a1a}.kd.dn{background:#fce6e6;color:#7a1a1a}
 .cg{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px}
 .cg3{grid-template-columns:2fr 1fr}
+/* Los ítems de grid no deben crecer al ancho del canvas de Chart.js (en móvil se recortaban) */
+.cg>*,.reg-top>*,.g4>*,.theory-grid>*,.cmp-g>*{min-width:0}
+.cc canvas{max-width:100%}
 @media(max-width:780px){.cg,.cg3{grid-template-columns:1fr}}
 .tc{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px}
 .th2{padding:11px 15px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:7px}
@@ -289,7 +292,7 @@ footer a:hover{color:var(--text)}
 .bib-item strong{color:var(--text)}
 .method-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:11px}
 .method-table th{background:var(--surface);padding:7px 10px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);border-bottom:2px solid var(--border)}
-.method-table td{padding:7px 10px;border-bottom:1px solid var(--border);line-height:1.5}
+.method-table td{padding:7px 10px;border-bottom:1px solid var(--border);line-height:1.5;white-space:normal}
 .method-table tr:last-child td{border-bottom:none}
 .nota-cortes{font-family:'Inter',sans-serif;font-size:12px;line-height:1.6;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--text);border-radius:6px;padding:9px 13px}
 .nota-cortes strong{color:var(--text)}
