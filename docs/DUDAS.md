@@ -2,7 +2,7 @@
 
 ## Nuevas en la Tanda 2
 
-A. **La capa 1990 es una copia exacta de la de 1980.** `1990_Ligth.geojson` tenía las mismas 5 geometrías (mismo hash) que 1980, aunque en `DATA` la superficie de 1990 es otra (93.791 ha contra 87.596). Hoy el mapa muestra 1980 rotulado como 1990. Hace falta el polígono de 1990 desde QGIS (GHS-BUILT-S 1990) para regenerarla con `tools/build-capas.sh`. ¿Mientras tanto querés ocultar el botón 1990 o agregar un aviso?
+A. ~~**La capa 1990 era una copia de la de 1980**~~: **resuelto** con el GeoJSON de píxeles 1990. Quedan dos detalles menores del archivo fuente: Valle Hermoso (281 píxeles contra 283 en `DATA`) y Casa Grande (29 contra 27) se intercambian 2 píxeles de borde, y 11 localidades difieren en más de 0,1 en la densidad media. No afectan el mapa, pero conviene saberlo.
 B. **Contorno provincial**: hoy sale de la capa `boundary` (admin_level 4) del mapa base OpenFreeMap, así que en el modo de respaldo (sin mapa base) no aparece. Si me pasás el límite oficial (p. ej. de IDECOR) en GeoJSON, se carga con `PROVINCIA_URL` y se ve siempre.
 C. **Rampa de 2020**: con más contraste de luminosidad, los pasos oscuros del naranja tiran a ocre y marrón (mismo tono, más oscuro). ¿Lo dejamos así o preferís menos contraste y más naranja?
 D. **Paleta regional en scatters**: con 9 regiones no hay paleta que separe todos los pares a ΔE ≥ 15 en visión normal; el par más cercano es Ciudades +50.000 ↔ Valles Turísticos (ΔE 10,8). Lo compensan la leyenda que aísla regiones y el filtro de región. Si querés más separación, conviene agrupar regiones en los scatters.

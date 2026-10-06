@@ -78,3 +78,15 @@ Ningún cambio modifica valores analíticos: `DATA` y `MUNICIPIOS_GJ` se verific
 - El mapa 2D lee las capas de densidad desde `capas/{año}_v1.pmtiles` (tippecanoe, z5–z12) por HTTP Range: la primera vista baja **134 KB** en lugar de ~3 MB con gzip. Medición en `docs/evaluacion-pmtiles.md`.
 - Respaldo automático: si la librería no carga o las teselas fallan (servidor sin Range), se usan los GeoJSON v2. La vista 3D usa siempre GeoJSON.
 - Se eliminan `tiles/` (44 MB, 8.634 .pbf sin uso), `build-tiles.sh` y `README_MIGRACION.md`. Regeneración: `tools/build-capas.sh` + `tools/build-pmtiles.sh`.
+
+### Capa 1990 real
+- La capa 1990 era una copia exacta de la de 1980. Se regenera desde el GeoJSON de píxeles GHSL 1990 (93.791 píxeles en EPSG:22174 con su valor BU en `DN`):
+  - Clasificación con los cortes de Metodología (el valor del corte va a la clase inferior, como en QGIS).
+  - Unión de píxeles por clase, reproyección a WGS84, 5 decimales.
+  - Archivos nuevos: `1990_v3.geojson` (6,7 MB) y `capas/1990_v2.pmtiles`.
+- Validación contra `DATA`:
+  - 93.791 píxeles, igual al total de 1990.
+  - 425 de 427 localidades con el mismo conteo y 416 con la misma densidad media (±0,1).
+  - Superficie creciente 1980 → 1990 → 2000 (86.550 → 92.579 → 110.597 ha) y misma grilla que los otros años (distancia mediana entre vértices: 0 m).
+- La versión de cada capa queda en `DENS_GEOJSON_VER` / `DENS_TILES_VER`. Script reproducible: `tools/build-capa-pixeles.sh`.
+

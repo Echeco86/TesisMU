@@ -143,9 +143,13 @@ function featureBBox(feat){
 
 // Capas de densidad v2: propiedad única dens_cat con las clases de la leyenda
 // (Muy Baja · Baja · Media · Alta · Muy Alta), 5 decimales. Ver CHANGELOG (Tanda 2).
-function densLayerUrl(yr){ return yr+'_v2.geojson'; }           // usada por la vista 3D
-// Experimento PMTiles: teselas vectoriales por año (tippecanoe, capa "densidad"), por HTTP Range
-function densTilesUrl(yr){ return new URL('capas/'+yr+'_v1.pmtiles', location.href).href; }
+// Versión de cada capa (caché immutable: si el contenido cambia, sube la versión del nombre).
+// 1990: capa real regenerada desde los píxeles GHSL 1990 (antes era una copia de 1980).
+var DENS_GEOJSON_VER={1980:2,1990:3,2000:2,2010:2,2020:2};
+var DENS_TILES_VER  ={1980:1,1990:2,2000:1,2010:1,2020:1};
+function densLayerUrl(yr){ return yr+'_v'+DENS_GEOJSON_VER[yr]+'.geojson'; }   // vista 3D y respaldo
+// PMTiles: teselas vectoriales por año (tippecanoe, capa "densidad"), por HTTP Range
+function densTilesUrl(yr){ return new URL('capas/'+yr+'_v'+DENS_TILES_VER[yr]+'.pmtiles', location.href).href; }
 var USE_PMTILES = typeof pmtiles!=='undefined';
 
 // Expresión MapLibre: clase de densidad → color del año
