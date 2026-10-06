@@ -11,7 +11,7 @@
 
 Este repositorio contiene el **dashboard geoespacial interactivo** desarrollado como producto central del trabajo final de maestría. La investigación analiza los procesos de expansión urbana y crecimiento poblacional en los **427 Municipios y Comunas de la Provincia de Córdoba** durante un período de cuatro décadas (1980–2022), combinando datos censales del INDEC con información satelital procesada a partir de la base de datos global GHSL (Global Human Settlement Layer) del Centro Común de Investigación de la Comisión Europea.
 
-🌐 **Dashboard en línea:** [echeco86.github.io/TesisMU](https://echeco86.github.io/TesisMU)
+🌐 **Dashboard en línea:** [expansionurbana.vercel.app](https://expansionurbana.vercel.app/)
 
 ---
 
@@ -21,12 +21,13 @@ El dashboard está organizado en las siguientes secciones:
 
 | Sección | Descripción |
 |---|---|
-| **Mapa Espacial** | Mapa Leaflet con capas de densidad por año (polígonos disueltos GeoJSON), sidebar flotante y gráficos por localidad |
+| **Introducción** | Cifras clave, línea de tiempo y síntesis de hallazgos |
+| **Exploración Territorial** | Mapa MapLibre con capas de densidad por año (PMTiles), coroplético por indicador, comparación 1980 \| 2020, vista 3D y ficha por localidad |
 | **Análisis Regional** | Desglose de indicadores por las 9 regiones definidas en la investigación |
 | **Análisis Exploratorio** | Cuatro gráficos de dispersión para explorar relaciones entre variables |
 | **Comparador** | Comparación de evolución entre localidades seleccionadas |
 | **Tabla de Datos** | Tabla completa con búsqueda, filtros y paginación para los 427 municipios y comunas |
-| **Marco Teórico** | Fundamentos conceptuales, metodología y taxonomía regional |
+| **Marco Conceptual y Metodológico** | Fundamentos conceptuales, metodología y taxonomía regional |
 | **Conclusiones** | Línea de tiempo, gráficos de síntesis y conclusiones numeradas con bibliografía |
 
 ---
@@ -37,7 +38,7 @@ Para cada una de las 427 localidades y en cinco cortes temporales (1980, 1990, 2
 
 - **Población** — datos censales INDEC
 - **Conteo de píxeles** — superficie construida GHSL a resolución 100m
-- **Densidad media** — hab/km² promedio por núcleo urbano
+- **Densidad media** — superficie construida media por píxel (m² BU/píxel, GHSL)
 - **Núcleos de construcción** — cantidad de núcleos urbanos identificados
 
 ---
@@ -46,15 +47,15 @@ Para cada una de las 427 localidades y en cinco cortes temporales (1980, 1990, 2
 
 La provincia se organiza en **9 regiones** de análisis:
 
-1. Área Metropolitana de Córdoba
-2. Ciudades con mas de cincuenta mil habitantes
+1. Gran Córdoba
+2. Ciudades de más de 50.000 habitantes
 3. Valles Turísticos
 4. Región Norte
 5. Región Oeste
-6. Región Sur
+6. Región Centro
 7. Región Este
 8. Región Sureste
-9. Región Noroeste
+9. Región Sur
 
 ---
 
@@ -62,12 +63,13 @@ La provincia se organiza en **9 regiones** de análisis:
 
 | Componente | Tecnología |
 |---|---|
-| Mapa interactivo | [Leaflet.js](https://leafletjs.com/) 1.9.4 |
+| Mapa interactivo | [MapLibre GL JS](https://maplibre.org/) 4.7.1 · mapa base [OpenFreeMap](https://openfreemap.org/) |
+| Vista 3D | [deck.gl](https://deck.gl/) |
 | Gráficos | [Chart.js](https://www.chartjs.org/) 4.4.1 |
-| Geodatos | GeoJSON (WGS84) |
+| Geodatos | PMTiles (capas de densidad) y GeoJSON (WGS84, vista 3D y respaldo) |
 | Frontend | HTML5 + CSS3 + JavaScript (vanilla) |
 | Tipografías | Space Mono, Fraunces, Inter |
-| Hosting | GitHub Pages |
+| Hosting | [Vercel](https://vercel.com/) (deploy automático desde `main`) |
 
 ---
 
@@ -75,10 +77,21 @@ La provincia se organiza en **9 regiones** de análisis:
 
 ```
 TesisMU/
-├── index.html                  # Dashboard principal (archivo autocontenido)
-├── {año}_v2.geojson         # Capas de densidad por año (1980–2020)
+├── index.html                  # Estructura y estilos del dashboard
+├── assets/
+│   ├── app.vN.js               # Lógica de la aplicación
+│   ├── data.vN.js              # Datos por localidad y región (DATA, MUNICIPIOS_GJ)
+│   └── *.webp                  # Imágenes
+├── capas/{año}_vN.pmtiles      # Capas de densidad por año para el mapa
+├── {año}_vN.geojson            # Las mismas capas en GeoJSON (vista 3D y respaldo)
+├── docs/                       # Dudas abiertas, equivalencias de nombres, evaluación PMTiles
+├── tools/                      # Scripts para regenerar capas y versionar archivos
+├── vercel.json                 # Encabezados de caché
+├── CHANGELOG.md
 └── README.md
 ```
+
+Los archivos de `assets/`, `capas/` y las capas GeoJSON se sirven con caché inmutable: al modificarlos hay que subir la versión del nombre (`tools/bump-asset.sh`).
 
 ---
 
