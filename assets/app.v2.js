@@ -466,6 +466,7 @@ function selectMun(name,featOrNull){
       '<div class="ficha-acciones">'+
         '<button class="ficha-btn ficha-btn-main" onclick="jumpToMunFromMap()">Ver análisis →</button>'+
         '<button class="ficha-btn" onclick="copyLink(this)" aria-live="polite">Copiar enlace</button>'+
+        '<button class="ficha-btn" onclick="printFicha()">Imprimir ficha</button>'+
       '</div>';
   }
 }
@@ -1877,6 +1878,71 @@ function copyLink(btn){
   if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(url).then(function(){done(true);},function(){done(false);}); return; }
   try{ var t=document.createElement('textarea'); t.value=url; t.style.position='fixed'; t.style.opacity='0'; document.body.appendChild(t); t.select(); var ok=document.execCommand('copy'); t.remove(); done(ok); }catch(e){ done(false); }
 }
+
+// ══ FICHA MUNICIPAL IMPRIMIBLE (una página A4) ══
+// Mini mapa: captura del mapa actual (centrado en el municipio); si no se puede, contorno en SVG.
+function _svgPath(geom,proj){
+  var polys=geom.type==='Polygon'?[geom.coordinates]:geom.coordinates, d='';
+  polys.forEach(function(p){ p.forEach(function(r){ r.forEach(function(c,i){ var q=proj(c); d+=(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1); }); d+='Z'; }); });
+  return d;
+}
+function _projFor(bb,w,h,pad){
+  var k=Math.cos((bb[0][1]+bb[1][1])/2*Math.PI/180), dx=(bb[1][0]-bb[0][0])*k, dy=bb[1][1]-bb[0][1];
+  var s=Math.min((w-2*pad)/dx,(h-2*pad)/dy), ox=(w-dx*s)/2, oy=(h-dy*s)/2;
+  return function(c){ return [ox+(c[0]-bb[0][0])*k*s, h-(oy+(c[1]-bb[0][1])*s)]; };
+}
+function _svgMunicipio(feat){
+  var bb=featureBBox(feat), pr=_projFor(bb,320,240,12);
+  return '<svg viewBox="0 0 320 240" class="fp-svg"><path d="'+_svgPath(feat.geometry,pr)+'" fill="#e9e5da" stroke="#1a1a1a" stroke-width="1.6"/></svg>';
+}
+function _svgProvincia(key){
+  var bb=[[-65.8,-34.9],[-61.75,-29.45]], pr=_projFor(bb,150,190,4), d='', sel='';
+  MUNICIPIOS_GJ.features.forEach(function(f){ var p=_svgPath(f.geometry,pr); if(f.properties.NOMBRE===key) sel=p; else d+=p; });
+  return '<svg viewBox="0 0 150 190" class="fp-svg-prov"><path d="'+d+'" fill="#b9b4a6" stroke="none"/><path d="'+sel+'" fill="#d2323c" stroke="#d2323c" stroke-width="3"/></svg>';
+}
+function _mapSnapshot(cb){
+  if(!map||is3D){ cb(null); return; }
+  var done=false, t=setTimeout(function(){ if(!done){ done=true; cb(null); } },1500);
+  map.once('render',function(){ if(done) return; done=true; clearTimeout(t); try{ cb(map.getCanvas().toDataURL('image/png')); }catch(e){ cb(null); } });
+  map.triggerRepaint();
+}
+function printFicha(key){
+  key=key||selectedMun; var ld=DATA.localities[key]; if(!ld) return;
+  var feat=MUNICIPIOS_GJ.features.find(function(f){return f.properties.NOMBRE===key;});
+  var rn=ld.region_nombre, R=DATA.regions[rn], d80=ld.data[1980]||{}, d20=ld.data[2020]||{};
+  var pat=clasificarPatron(key), g=function(a,b){ return a>0&&b!=null?(b-a)/a*100:null; };
+  var filas=YEARS.map(function(y){ var d=ld.data[y]||{};
+    return '<tr><td>'+y+'</td><td>'+fmt(d.pob)+' <small>('+CENSO[y]+')</small></td><td>'+fmt(d.pix)+'</td><td>'+fmt(d.den,1)+'</td><td>'+fmt(d.nuc)+'</td></tr>'; }).join('');
+  var cmp=[
+    ['Crec. población 1980–2022', fmtPct(g(d80.pob,d20.pob)), fmtPct(g(R[1980].pob,R[2020].pob))],
+    ['Crec. superficie 1980–2020', fmtPct(g(d80.pix,d20.pix)), fmtPct(g(R[1980].pix,R[2020].pix))],
+    ['Densidad construida 2020 (m² BU/píxel)', fmt(d20.den,1), fmt(R[2020].den,1)],
+    ['Variación de la densidad 1980–2020', fmtPct(g(d80.den,d20.den)), fmtPct(g(R[1980].den,R[2020].den))],
+    ['Núcleos 1980 → 2020', fmt(d80.nuc)+' → '+fmt(d20.nuc), fmt(R[1980].nuc)+' → '+fmt(R[2020].nuc)]
+  ].map(function(r){ return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>'; }).join('');
+  var rank=RANK_INDS.map(function(it){ var r=rankOf(key,it[0]); return r?'<li>'+it[1]+': <strong>'+r.puesto+'.º</strong> de '+r.n+' · percentil '+r.pct+' en la región</li>':''; }).join('');
+  var url=location.origin+location.pathname+'#mapa/loc='+_slug(dn(key));
+  var fecha=new Intl.DateTimeFormat('es-AR',{dateStyle:'long'}).format(new Date());
+  _mapSnapshot(function(img){
+    var mapa=img?'<img src="'+img+'" alt="Mapa de '+dn(key)+'" class="fp-img">':(feat?_svgMunicipio(feat):'');
+    document.getElementById('fichaPrint').innerHTML=
+      '<header class="fp-head"><div><div class="fp-eye">Transformaciones Territoriales · Provincia de Córdoba</div>'+
+        '<h2>'+dn(key)+'</h2><div class="fp-meta">Dpto. '+depn(ld.dep)+' · '+rlab(rn)+' · '+(feat&&feat.properties.TIPO==='COM'?'Comuna':'Municipio')+'</div></div>'+
+        (feat?_svgProvincia(key):'')+'</header>'+
+      '<div class="fp-grid"><div class="fp-map">'+mapa+'<div class="fp-cap">'+(img?'Densidad construida GHSL y límites municipales (vista actual del mapa).':'Límite del municipio o comuna.')+'</div></div>'+
+        '<div><h3>Patrón de crecimiento 1980–2020</h3><p class="fp-pat"><strong>'+(pat?pat.label:'Sin clasificar')+'</strong>'+
+        (pat?'':' — sin población o superficie en 1980 no se puede calcular la variación.')+'</p>'+
+        '<h3>Ranking 2020</h3><ul class="fp-rank">'+rank+'</ul></div></div>'+
+      '<h3>Indicadores por corte</h3><table class="fp-t"><thead><tr><th>Corte</th><th>Población (censo)</th><th>Superficie (ha)</th><th>Densidad (m² BU/píxel)</th><th>Núcleos</th></tr></thead><tbody>'+filas+'</tbody></table>'+
+      '<h3>Comparación con su región · '+rlab(rn)+'</h3><table class="fp-t"><thead><tr><th>Indicador</th><th>'+dn(key)+'</th><th>Región</th></tr></thead><tbody>'+cmp+'</tbody></table>'+
+      '<footer class="fp-foot">Fuentes: INDEC, censos 1980–2022 · GHSL GHS-BUILT-S R2022A (JRC, Comisión Europea). '+
+        'Echecolanea, J. M. Transformaciones territoriales (Tesis de Maestría en Urbanismo, FAUDI-UNC). http://hdl.handle.net/11086/560262 · '+
+        url+' · '+fecha+'</footer>';
+    document.body.classList.add('print-ficha');
+    window.print();
+  });
+}
+window.addEventListener('afterprint',function(){ document.body.classList.remove('print-ficha'); });
 
 // ══ MAP DOWNLOAD FROM DRIVE ══
 var DRIVE_FOLDER = '1GSGLTnf-798G4vggjE7BbhgAr6PVCVEN';

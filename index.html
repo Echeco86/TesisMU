@@ -496,6 +496,30 @@ select:focus-visible,input:focus-visible{border-color:var(--text);outline:2px so
   .section{display:block!important;page-break-after:always}
   #mapTimeline,.map-sidebar{display:none!important}
 }
+/* Ficha municipal imprimible (body.print-ficha): solo #fichaPrint, una página A4 */
+#fichaPrint{display:none}
+@media print{
+  @page{size:A4;margin:12mm}
+  body.print-ficha{display:block;background:#fff;min-height:0}
+  body.print-ficha>*:not(#fichaPrint){display:none!important}
+  body.print-ficha #fichaPrint{display:block!important;font-family:'Inter',sans-serif;font-size:10.5px;color:#1a1a1a;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #fichaPrint h2{font-family:'Fraunces',serif;font-size:24px;font-weight:900;margin:2px 0}
+  #fichaPrint h3{font-family:'Fraunces',serif;font-size:13px;margin:12px 0 5px;padding-bottom:3px;border-bottom:1.5px solid #1a1a1a}
+  .fp-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1a1a1a;padding-bottom:8px}
+  .fp-eye,.fp-meta{font-family:'Space Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#5c5c52}
+  .fp-svg-prov{width:96px;height:auto}
+  .fp-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;margin-top:10px;align-items:start}
+  .fp-img,.fp-svg{width:100%;height:auto;max-height:240px;object-fit:cover;border:1px solid #ddd9ce;border-radius:4px}
+  .fp-cap{font-size:8.5px;color:#5c5c52;margin-top:3px}
+  .fp-pat{margin:0}
+  .fp-rank{margin:0;padding-left:16px;line-height:1.6}
+  .fp-t{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+  .fp-t th{font-family:'Space Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:.06em;color:#5c5c52;text-align:right;border-bottom:1px solid #ddd9ce;padding:4px 6px;background:none;cursor:default}
+  .fp-t td{text-align:right;padding:4px 6px;border-bottom:1px solid #eceae3;white-space:normal}
+  .fp-t th:first-child,.fp-t td:first-child{text-align:left}
+  .fp-t small{color:#5c5c52}
+  .fp-foot{margin-top:12px;padding-top:6px;border-top:1px solid #ddd9ce;font-size:8px;color:#5c5c52;line-height:1.5;word-break:break-all}
+}
 
 /* ── MOBILE RESPONSIVO ── */
 /* Hamburger: oculto por defecto en desktop */
@@ -1350,6 +1374,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
   </div>
 </section>
 </main>
+<div id="fichaPrint" aria-hidden="true"></div>
 <footer>
   <div><strong>Mgtr. Lic. Juan Manuel Echecolanea</strong> &nbsp;·&nbsp; <span>Echecolaneajuan&#64;gmail.com</span></div>
   <div style="display:flex;gap:10px;align-items:center"><span>Expansión Urbana · Córdoba · Censos 1980–2022 · GHSL 1980–2020</span></div>
