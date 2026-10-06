@@ -476,6 +476,20 @@ footer a:hover{color:var(--text)}
 /* ── 3D CANVAS ── */
 #btn3D{width:100%;margin-top:8px;padding:7px 10px;background:var(--text);color:#fff;border:none;border-radius:5px;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;cursor:pointer;transition:background .2s;letter-spacing:.05em}
 #btn3D.active{background:#854bfa}
+.btn-map2{width:100%;margin-top:6px;padding:7px 10px;background:var(--card);color:var(--text);border:1px solid var(--text);border-radius:5px;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;cursor:pointer;letter-spacing:.05em}
+.btn-map2.active{background:var(--text);color:#fff}
+/* Swipe 1980 | 2020 */
+#swipeWrap{position:absolute;inset:0;z-index:600;display:none;background:var(--bg)}
+.swipe-map{position:absolute;inset:0}
+#swipeHandle{position:absolute;top:0;bottom:0;width:4px;margin-left:-2px;background:#1a1a1a;cursor:ew-resize;touch-action:none;z-index:2}
+#swipeHandle span{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:#fff;border:2px solid #1a1a1a;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+#swipeHandle:focus-visible span{outline:2px solid #1a1a1a;outline-offset:3px}
+.swipe-tag{position:absolute;top:12px;z-index:3;padding:4px 10px;border-radius:14px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#fff;pointer-events:none}
+.swipe-tag-l{left:12px;background:#019101}
+#mapa.swipe-on .map-sidebar{display:none!important}
+.swipe-tag-r{right:12px;background:#a46905}
+.swipe-close{position:absolute;bottom:14px;right:56px;z-index:3;padding:6px 12px;background:var(--text);color:#fff;border:none;border-radius:5px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer}
+@media(max-width:767px){.swipe-close{bottom:auto;top:12px;right:auto;left:50%;transform:translateX(-50%)}}
 #deckCanvas{position:absolute;inset:0;display:none;z-index:450}
 #deck3DInfo{position:absolute;top:10px;right:10px;z-index:460;background:rgba(255,255,255,.94);border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-family:'Space Mono',monospace;font-size:9px;display:none;line-height:1.7}
 
@@ -889,6 +903,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
           </div>
           <div style="font-size:9px;color:var(--muted);margin-top:6px;text-align:center">Podés activar múltiples años</div>
           <button id="btn3D" onclick="toggle3D()">⬡ Vista 3D</button>
+          <button id="btnSwipe" class="btn-map2" aria-pressed="false" onclick="toggleSwipe()">⇆ Comparar 1980 | 2020</button>
         </div>
         <div class="map-panel">
           <h4>Buscar Municipio</h4>
@@ -905,6 +920,13 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
         </div>
       </div>
       <div id="map"></div>
+      <div id="swipeWrap" aria-label="Comparador deslizante: 1980 a la izquierda, 2020 a la derecha">
+        <div id="swipeA" class="swipe-map"></div>
+        <div id="swipeB" class="swipe-map"></div>
+        <div class="swipe-tag swipe-tag-l">1980</div><div class="swipe-tag swipe-tag-r">2020</div>
+        <div id="swipeHandle" role="slider" tabindex="0" aria-label="Divisor 1980 | 2020" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span aria-hidden="true">⇆</span></div>
+        <button class="swipe-close" onclick="toggleSwipe()" aria-label="Cerrar comparador 1980 | 2020">✕ Cerrar</button>
+      </div>
       <canvas id="deckCanvas"
         role="img"
         aria-label="Mapa 3D de expansión urbana de la provincia de Córdoba. Visualización extruída por categoría de densidad construida (GHSL). Arrastrá para rotar, scroll para zoom."></canvas>

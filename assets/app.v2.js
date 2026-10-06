@@ -1944,6 +1944,74 @@ function printFicha(key){
 }
 window.addEventListener('afterprint',function(){ document.body.classList.remove('print-ficha'); });
 
+// ══ SWIPE 1980 | 2020 ══
+// Dos mapas sincronizados (1980 abajo, 2020 arriba); el de arriba se recorta con clip-path
+// según la posición del divisor. Arrastrable con mouse/táctil y con flechas del teclado.
+var _cmp=null;
+function _addDensityTo(m,yr){
+  var id='year-'+yr, lyr={id:'density-'+yr,type:'fill',source:id,paint:{'fill-color':_densColorExpr(yr),'fill-opacity':0.9}};
+  if(USE_PMTILES){ m.addSource(id,{type:'vector',url:'pmtiles://'+densTilesUrl(yr)}); lyr['source-layer']='densidad'; m.addLayer(lyr,'muni-outline'); }
+  else fetch(densLayerUrl(yr)).then(function(r){return r.json();}).then(function(gj){ m.addSource(id,{type:'geojson',data:gj}); m.addLayer(lyr,'muni-outline'); });
+}
+function _cmpMap(container,yr,view){
+  return _loadBaseStyle().then(function(style){
+    var m=new maplibregl.Map({container:container,style:style,center:view.center,zoom:view.zoom,bearing:view.bearing,pitch:0,attributionControl:false});
+    m.on('load',function(){
+      m.addLayer({id:'muni-outline',type:'line',source:'municipios',paint:{'line-color':'#333','line-width':0.8,'line-opacity':0.45}});
+      if(selectedMun&&_munSelected) m.addLayer({id:'muni-sel',type:'line',source:'municipios',paint:{'line-color':'#1a1a1a','line-width':2.4},filter:['==','NOMBRE',selectedMun]});
+      _addDensityTo(m,yr);
+    });
+    return m;
+  });
+}
+function toggleSwipe(){
+  var btn=document.getElementById('btnSwipe'), wrap=document.getElementById('swipeWrap');
+  if(_cmp){ // salir: el mapa principal queda en la vista del comparador
+    var c=_cmp.a.getCenter(), z=_cmp.a.getZoom();
+    _cmp.a.remove(); _cmp.b.remove(); _cmp=null;
+    wrap.style.display='none'; btn.classList.remove('active'); btn.setAttribute('aria-pressed','false');
+    document.getElementById('mapa').classList.remove('swipe-on');
+    if(map){ map.jumpTo({center:c,zoom:z}); map.resize(); }
+    return;
+  }
+  if(!map) return;
+  if(is3D) toggle3D();
+  var view={center:map.getCenter(),zoom:map.getZoom(),bearing:map.getBearing()};
+  wrap.style.display='block'; btn.classList.add('active'); btn.setAttribute('aria-pressed','true');
+  document.getElementById('mapa').classList.add('swipe-on'); // la barra lateral no tapa el lado 1980
+  Promise.all([_cmpMap('swipeA',1980,view),_cmpMap('swipeB',2020,view)]).then(function(ms){
+    _cmp={a:ms[0],b:ms[1],lock:false};
+    function sync(src,dst){ src.on('move',function(){ if(_cmp.lock) return; _cmp.lock=true; dst.jumpTo({center:src.getCenter(),zoom:src.getZoom(),bearing:src.getBearing(),pitch:src.getPitch()}); _cmp.lock=false; }); }
+    sync(_cmp.a,_cmp.b); sync(_cmp.b,_cmp.a);
+    _setSwipe(0.5);
+  });
+}
+function _setSwipe(f){
+  f=Math.max(0.02,Math.min(0.98,f));
+  var wrap=document.getElementById('swipeWrap'), w=wrap.clientWidth, x=Math.round(w*f);
+  document.getElementById('swipeB').style.clipPath='inset(0 0 0 '+x+'px)';
+  var h=document.getElementById('swipeHandle'); h.style.left=x+'px';
+  h.setAttribute('aria-valuenow',Math.round(f*100)); h.setAttribute('aria-valuetext','1980 a la izquierda del '+Math.round(f*100)+'%, 2020 a la derecha');
+  wrap._f=f;
+}
+(function(){
+  document.addEventListener('DOMContentLoaded',function(){
+    var h=document.getElementById('swipeHandle'), wrap=document.getElementById('swipeWrap'); if(!h) return;
+    var drag=false;
+    h.addEventListener('pointerdown',function(e){ drag=true; h.setPointerCapture(e.pointerId); e.preventDefault(); });
+    h.addEventListener('pointermove',function(e){ if(!drag) return; var r=wrap.getBoundingClientRect(); _setSwipe((e.clientX-r.left)/r.width); });
+    h.addEventListener('pointerup',function(){ drag=false; });
+    h.addEventListener('keydown',function(e){
+      var f=wrap._f||0.5;
+      if(e.key==='ArrowLeft'){ _setSwipe(f-0.05); e.preventDefault(); }
+      else if(e.key==='ArrowRight'){ _setSwipe(f+0.05); e.preventDefault(); }
+      else if(e.key==='Home'){ _setSwipe(0.02); e.preventDefault(); }
+      else if(e.key==='End'){ _setSwipe(0.98); e.preventDefault(); }
+    });
+    window.addEventListener('resize',function(){ if(_cmp) _setSwipe(wrap._f||0.5); });
+  });
+})();
+
 // ══ MAP DOWNLOAD FROM DRIVE ══
 var DRIVE_FOLDER = '1GSGLTnf-798G4vggjE7BbhgAr6PVCVEN';
 var DRIVE_API_KEY = 'AIzaSyD2L8VGh1CbXJLj3ab6IpyyJpBiDIbl3nk';
