@@ -101,6 +101,15 @@ select:focus,input:focus{border-color:var(--text)}
 .map-panel h4{font-family:'Fraunces',serif;font-size:13px;font-weight:700;margin-bottom:9px;padding-bottom:5px;border-bottom:1px solid var(--border)}
 #map{position:absolute;inset:0;}
 .yr-layer-row{display:flex;align-items:center;gap:5px}
+.yr-layer-head{display:flex;justify-content:space-between;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding:0 2px}
+/* Sliders del sitio: riel fino, tramo recorrido y perilla con el color del año (--acc) */
+input[type=range].rng{-webkit-appearance:none;appearance:none;background:transparent;border:none;padding:0;height:20px;cursor:pointer;--acc:var(--text);--pct:50%}
+input[type=range].rng::-webkit-slider-runnable-track{height:4px;border-radius:2px;background:linear-gradient(to right,var(--acc) 0,var(--acc) var(--pct),var(--border) var(--pct),var(--border) 100%)}
+input[type=range].rng::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;margin-top:-5px;border-radius:50%;background:#fff;border:3px solid var(--acc);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+input[type=range].rng::-moz-range-track{height:4px;border-radius:2px;background:var(--border)}
+input[type=range].rng::-moz-range-progress{height:4px;border-radius:2px;background:var(--acc)}
+input[type=range].rng::-moz-range-thumb{width:9px;height:9px;border-radius:50%;background:#fff;border:3px solid var(--acc);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+input[type=range].rng:focus-visible{outline:2px solid var(--text);outline-offset:2px;border-radius:4px}
 .yr-toggle-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
 .yr-btn{display:flex;align-items:center;gap:6px;padding:7px 9px;border-radius:6px;border:1.5px solid;cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;transition:all .2s;background:transparent}
 .yr-btn.off{opacity:.3;filter:grayscale(.6)}
@@ -124,6 +133,7 @@ select:focus,input:focus{border-color:var(--text)}
 .reg-canvas-wrap{position:relative;height:360px;overflow:hidden}
 /* Sin position:absolute en canvas — Chart.js gestiona sus propias dimensiones */
 .reg-chart-header{margin-bottom:4px}
+.reg-esc{margin:6px 0 10px}
 .reg-yr-pills{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
 #regTable{width:100%;border-collapse:collapse}
 #regTable thead th{background:var(--surface);padding:8px 12px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-bottom:2px solid var(--border);white-space:nowrap}
@@ -795,25 +805,26 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
         <div class="map-panel">
           <h4>Capas por año</h4>
           <div style="display:flex;flex-direction:column;gap:7px">
+            <div class="yr-layer-head" aria-hidden="true"><span>Capa</span><span>Opacidad</span></div>
             <div class="yr-layer-row" id="ylr-1980">
               <button class="yr-btn off" id="yrb-1980" style="border-color:#28c924;color:#155c00;flex:1" onclick="toggleMapYr(1980)"><div class="yr-sw" style="background:#3aff33"></div><span>1980</span></button>
-              <input type="range" id="opa-1980" min="0" max="100" value="85" style="width:60px;padding:2px 0" oninput="setLayerOpacity(1980,this.value)" title="Transparencia 1980">
+              <input type="range" class="rng" id="opa-1980" min="0" max="100" value="85" style="width:64px;--acc:#28c924" oninput="setLayerOpacity(1980,this.value)" aria-label="Opacidad de la capa 1980" title="Opacidad 1980">
             </div>
             <div class="yr-layer-row" id="ylr-1990">
               <button class="yr-btn off" id="yrb-1990" style="border-color:#1ec3e6;color:#0a6070;flex:1" onclick="toggleMapYr(1990)"><div class="yr-sw" style="background:#1ec3e6"></div><span>1990</span></button>
-              <input type="range" id="opa-1990" min="0" max="100" value="85" style="width:60px;padding:2px 0" oninput="setLayerOpacity(1990,this.value)" title="Transparencia 1990">
+              <input type="range" class="rng" id="opa-1990" min="0" max="100" value="85" style="width:64px;--acc:#1ec3e6" oninput="setLayerOpacity(1990,this.value)" aria-label="Opacidad de la capa 1990" title="Opacidad 1990">
             </div>
             <div class="yr-layer-row" id="ylr-2000">
               <button class="yr-btn off" id="yrb-2000" style="border-color:#854bfa;color:#4a1a9a;flex:1" onclick="toggleMapYr(2000)"><div class="yr-sw" style="background:#854bfa"></div><span>2000</span></button>
-              <input type="range" id="opa-2000" min="0" max="100" value="85" style="width:60px;padding:2px 0" oninput="setLayerOpacity(2000,this.value)" title="Transparencia 2000">
+              <input type="range" class="rng" id="opa-2000" min="0" max="100" value="85" style="width:64px;--acc:#854bfa" oninput="setLayerOpacity(2000,this.value)" aria-label="Opacidad de la capa 2000" title="Opacidad 2000">
             </div>
             <div class="yr-layer-row" id="ylr-2010">
               <button class="yr-btn off" id="yrb-2010" style="border-color:#e33943;color:#8a1a20;flex:1" onclick="toggleMapYr(2010)"><div class="yr-sw" style="background:#e33943"></div><span>2010</span></button>
-              <input type="range" id="opa-2010" min="0" max="100" value="85" style="width:60px;padding:2px 0" oninput="setLayerOpacity(2010,this.value)" title="Transparencia 2010">
+              <input type="range" class="rng" id="opa-2010" min="0" max="100" value="85" style="width:64px;--acc:#e33943" oninput="setLayerOpacity(2010,this.value)" aria-label="Opacidad de la capa 2010" title="Opacidad 2010">
             </div>
             <div class="yr-layer-row" id="ylr-2020">
               <button class="yr-btn" id="yrb-2020" style="border-color:#faa523;color:#7a4a00;flex:1" onclick="toggleMapYr(2020)"><div class="yr-sw" style="background:#faa523"></div><span>2020</span></button>
-              <input type="range" id="opa-2020" min="0" max="100" value="85" style="width:60px;padding:2px 0" oninput="setLayerOpacity(2020,this.value)" title="Transparencia 2020">
+              <input type="range" class="rng" id="opa-2020" min="0" max="100" value="85" style="width:64px;--acc:#faa523" oninput="setLayerOpacity(2020,this.value)" aria-label="Opacidad de la capa 2020" title="Opacidad 2020">
             </div>
           </div>
           <div style="font-size:9px;color:var(--muted);margin-top:6px;text-align:center">Podés activar múltiples años</div>
@@ -960,7 +971,11 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
     <div class="cc reg-chart-box">
       <div class="reg-chart-header">
         <h3>Evolución temporal</h3>
-        <div class="cs">todas las regiones · 1980–2020</div>
+        <div class="cs" id="regTimeSub">índice 100 = valor de 1980 · todas las regiones</div>
+      </div>
+      <div class="pills reg-esc" role="group" aria-label="Escala del gráfico">
+        <button class="pill on" id="regEscNorm" aria-pressed="true" onclick="setRegEsc('norm',this)" style="font-size:10px;padding:5px 8px">Base 100 (1980)</button>
+        <button class="pill" id="regEscAbs" aria-pressed="false" onclick="setRegEsc('abs',this)" style="font-size:10px;padding:5px 8px">Absoluto</button>
       </div>
       <div class="reg-canvas-wrap"><canvas id="chRegTime"></canvas></div>
     </div>
@@ -1047,9 +1062,9 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
       <h3>Scatter animado · Población vs. Superficie</h3>
       <div class="cs">animación 1980→2020 · cada punto = una localidad</div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
-        <span class="ctrl-lbl">Año:</span>
-        <input type="range" id="animSlider" min="0" max="4" value="4" step="1"
-          style="width:120px" oninput="updateAnimScatter(this.value)">
+        <label class="ctrl-lbl" for="animSlider">Año</label>
+        <input type="range" class="rng" id="animSlider" min="0" max="4" value="4" step="1"
+          style="width:130px;--acc:#faa523" oninput="updateAnimScatter(this.value)" aria-label="Año del scatter animado" aria-valuetext="2020">
         <span id="animYrLabel" style="font-weight:700;font-size:12px;min-width:36px">2020</span>
         <button onclick="playAnimation()" style="background:var(--text);color:#fff;border:none;border-radius:5px;padding:4px 10px;font-family:Space Mono,monospace;font-size:10px;cursor:pointer">▶ Play</button>
       </div>
@@ -1057,7 +1072,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
     </div>
     <div class="cc">
       <h3>Trayectoria individual · 1980→2020</h3>
-      <div class="cs">seleccioná una localidad para ver su trayectoria en el espacio pob/densidad</div>
+      <div class="cs">superficie construida vs. población · cada punto es un corte</div>
       <div style="margin-bottom:8px">
         <select id="trajLoc" onchange="buildTrayectoria()" style="width:100%">
           <option value="">— Seleccionar localidad —</option>
@@ -1121,8 +1136,8 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
     <div class="ctrl-g">
       <span class="ctrl-lbl">Escala</span>
       <div style="display:flex;gap:4px">
-        <button id="cmpEscAbs" class="pill on" onclick="setCmpEsc('abs',this)" style="font-size:10px;padding:5px 8px">Absoluta</button>
-        <button id="cmpEscNorm" class="pill" onclick="setCmpEsc('norm',this)" style="font-size:10px;padding:5px 8px">Base 100 (1980)</button>
+        <button id="cmpEscNorm" class="pill on" onclick="setCmpEsc('norm',this)" style="font-size:10px;padding:5px 8px">Base 100 (1980)</button>
+        <button id="cmpEscAbs" class="pill" onclick="setCmpEsc('abs',this)" style="font-size:10px;padding:5px 8px">Absoluta</button>
       </div>
     </div>
   </div>

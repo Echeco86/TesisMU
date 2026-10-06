@@ -53,6 +53,29 @@ function fmtTickPct(v,signo){return (signo&&v>0?'+':'')+fmt(v,1)+'%';}
 const REG_LABEL={'Ciudades +50,000':'Ciudades +50.000','Valles Turisticos':'Valles Turísticos'};
 function rlab(rn){return REG_LABEL[rn]||rn;}
 if(typeof Chart!=='undefined') Chart.defaults.locale='es-AR';
+// Leyenda: al pasar el mouse por una serie se atenúan las demás (aislar una región entre nueve)
+function _fadeCol(c){ return (typeof c==='string'&&c.charAt(0)==='#')?c.slice(0,7)+'26':c; }
+function _fadeAny(c){ return Array.isArray(c)?c.map(_fadeCol):_fadeCol(c); }
+function legendDimHover(e,item,legend){
+  var ch=legend.chart;
+  ch.data.datasets.forEach(function(d,i){
+    if(d._bg===undefined){ d._bg=d.backgroundColor; d._bc=d.borderColor; d._pb=d.pointBackgroundColor; }
+    var on=(i===item.datasetIndex)||d.label==='_ref';
+    d.backgroundColor=on?d._bg:_fadeAny(d._bg);
+    d.borderColor=on?d._bc:_fadeAny(d._bc);
+    if(d._pb!==undefined) d.pointBackgroundColor=on?d._pb:_fadeAny(d._pb);
+  });
+  ch.update('none');
+  if(e&&e.native&&e.native.target) e.native.target.style.cursor='pointer';
+}
+function legendDimLeave(e,item,legend){
+  var ch=legend.chart;
+  ch.data.datasets.forEach(function(d){
+    if(d._bg!==undefined){ d.backgroundColor=d._bg; d.borderColor=d._bc; if(d._pb!==undefined) d.pointBackgroundColor=d._pb; }
+  });
+  ch.update('none');
+  if(e&&e.native&&e.native.target) e.native.target.style.cursor='';
+}
 function killChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
 const BS={x:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)}},grid:{color:'rgba(0,0,0,.05)'}},y:{ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(10)}},grid:{color:'rgba(0,0,0,.05)'}}};
 const BO={responsive:true,maintainAspectRatio:false,animation:{duration:300},plugins:{legend:{display:false}},scales:BS};
@@ -518,6 +541,13 @@ function renderCharts(){
 
 // ══ ANÁLISIS REGIONAL ══
 var regYr = 2020;
+var regEsc = 'norm'; // 'norm' = base 100 (1980) · 'abs' = valores absolutos
+function setRegEsc(esc,btn){
+  regEsc=esc;
+  document.querySelectorAll('#regEscNorm,#regEscAbs').forEach(function(b){ b.classList.remove('on'); b.setAttribute('aria-pressed','false'); });
+  if(btn){ btn.classList.add('on'); btn.setAttribute('aria-pressed','true'); }
+  buildRegional();
+}
 const RNAMES = Object.keys(DATA.regions);
 const RCOLORS_MAP = REGION_COLORS;
 const IND_LABELS = {pob:'Población',pix:'Superficie construida',den:'Densidad construida',nuc:'Núcleos'};
@@ -552,6 +582,10 @@ function buildRegional(){
   if(title) title.textContent = 'Evolución por región · ' + label;
 
   // ── Line chart: evolution all regions ──
+  var rnorm = regEsc==='norm';
+  var rsub = document.getElementById('regTimeSub');
+  if(rsub) rsub.textContent = rnorm ? 'índice 100 = valor de 1980 · todas las regiones' : 'valores absolutos · todas las regiones';
+  function regVal(rn,y){ return DATA.regions[rn][y] ? DATA.regions[rn][y][ind] : 0; }
   killChart('regTime');
   charts['regTime'] = new Chart(document.getElementById('chRegTime').getContext('2d'),{
     type: 'line',
@@ -560,7 +594,10 @@ function buildRegional(){
       datasets: RNAMES.map(function(rn){
         return {
           label: rlab(rn),
-          data: YEARS.map(function(y){ return DATA.regions[rn][y] ? DATA.regions[rn][y][ind] : 0; }),
+          data: YEARS.map(function(y){
+            var v=regVal(rn,y), b=regVal(rn,1980);
+            return rnorm ? (b>0 ? Math.round(v/b*1000)/10 : null) : v;
+          }),
           borderColor: RCOLORS_MAP[rn] || '#888',
           backgroundColor: 'transparent',
           tension: 0.35,
@@ -578,6 +615,7 @@ function buildRegional(){
       plugins:{
         legend:{
           position: 'bottom',
+          onHover: legendDimHover, onLeave: legendDimLeave,
           labels:{
             color:'#888879',
             font:{family:'Space Mono',size:cfs(9)},
@@ -590,14 +628,17 @@ function buildRegional(){
         tooltip:{
           callbacks:{
             label: function(item){
-              return ' ' + item.dataset.label + ': ' + fmt(item.raw, ind==='den'?1:0) + ' ' + IND_UNITS[ind];
+              var abs = regVal(RNAMES[item.datasetIndex], YEARS[item.dataIndex]);
+              var absTxt = fmt(abs, ind==='den'?1:0) + ' ' + IND_UNITS[ind];
+              return rnorm ? ' ' + item.dataset.label + ': ' + fmtNum(item.raw,1) + ' (base 100) · ' + absTxt
+                           : ' ' + item.dataset.label + ': ' + absTxt;
             }
           }
         }
       },
       scales:{
         x:{ ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)}}, grid:{color:'rgba(0,0,0,.05)'} },
-        y:{ ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)},callback:function(v){return fmt(v,ind==='den'?1:0);}}, grid:{color:'rgba(0,0,0,.05)'}, beginAtZero:true }
+        y:{ ticks:{color:'#888879',font:{family:'Space Mono',size:cfs(9)},callback:function(v){return rnorm?fmt(v):fmt(v,ind==='den'?1:0);}}, grid:{color:'rgba(0,0,0,.05)'}, beginAtZero:!rnorm }
       }
     }
   });
@@ -772,7 +813,7 @@ function jumpToLoc(name){selectedMun=name;renderCharts();document.getElementById
 
 // ── COMPARADOR ──
 var cmpModo = 'localidad'; // 'localidad' o 'region'
-var cmpEsc = 'abs'; // 'abs' o 'norm' (base 100)
+var cmpEsc = 'norm'; // 'norm' (base 100, por defecto) o 'abs'
 var cmpRegSels = [Object.keys(DATA.regions)[0],'',''];
 
 function setCmpModo(modo, btn){
@@ -1168,7 +1209,7 @@ function buildAnalisis(){
     });
   }
   var sb={responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{position:'bottom',labels:{color:'#888879',font:{family:'Space Mono',size:cfs(10)},padding:6,boxWidth:8,usePointStyle:true}}}};
+    plugins:{legend:{position:'bottom',onHover:legendDimHover,onLeave:legendDimLeave,labels:{color:'#888879',font:{family:'Space Mono',size:cfs(10)},padding:6,boxWidth:8,usePointStyle:true}}}};
 
   // Actualizar subtítulos con el año de corte activo
   (function(){
@@ -1263,7 +1304,7 @@ function buildAnalisis(){
     var yrIdx=YEARS_ARR.indexOf(aYr);
     if(yrIdx>=0){
       var sl=document.getElementById('animSlider'),yl=document.getElementById('animYrLabel');
-      if(sl) sl.value=yrIdx;
+      if(sl){ sl.value=yrIdx; sl.style.setProperty('--acc',YC[aYr]); sl.setAttribute('aria-valuetext',aYr); rngFill(sl); }
       if(yl) yl.textContent=aYr;
       animYrIdx=yrIdx;
     }
@@ -1370,7 +1411,8 @@ function updateAnimScatter(idx){
   animYrIdx = parseInt(idx);
   var yr = YEARS_ARR[animYrIdx];
   document.getElementById('animYrLabel').textContent = yr;
-  document.getElementById('animSlider').value = idx;
+  var sl = document.getElementById('animSlider');
+  sl.value = idx; sl.style.setProperty('--acc', YC[yr]); sl.setAttribute('aria-valuetext', yr); rngFill(sl);
   buildAnimScatter(yr);
 }
 
@@ -1427,7 +1469,7 @@ function buildAnimScatter(yr){
     options:{responsive:true,maintainAspectRatio:false,
       animation:{duration:400},
       plugins:{
-        legend:{position:'bottom',labels:{color:'#888879',font:{family:'Space Mono',size:cfs(9)},padding:5,boxWidth:8,usePointStyle:true}},
+        legend:{position:'bottom',onHover:legendDimHover,onLeave:legendDimLeave,labels:{color:'#888879',font:{family:'Space Mono',size:cfs(9)},padding:5,boxWidth:8,usePointStyle:true}},
         tooltip:{callbacks:{
           title:function(i){return dn(i[0].raw.label);},
           label:function(i){return[' Superficie: '+fmt(i.raw.x)+' ha',' Población: '+fmt(i.raw.y)];}
@@ -1490,7 +1532,9 @@ function initAnalisisExtras(){
   var sel=document.getElementById('trajLoc');
   if(sel&&sel.children.length<=1){
     LOCS.forEach(function(l){var o=document.createElement('option');o.value=l;o.textContent=dn(l);sel.appendChild(o);});
+    if(!sel.value && DATA.localities['VILLA CARLOS PAZ']) sel.value='VILLA CARLOS PAZ';
   }
+  buildTrayectoria();
   updateAnimScatter(4);
 }
 
@@ -1571,8 +1615,16 @@ function exportCSV(){
   a.click();
 }
 
+// Sliders .rng: el tramo recorrido se pinta con --pct
+function rngFill(el){
+  var mn=+el.min||0, mx=+el.max||100;
+  el.style.setProperty('--pct', ((+el.value-mn)/(mx-mn)*100)+'%');
+}
+document.addEventListener('input',function(e){ if(e.target.classList&&e.target.classList.contains('rng')) rngFill(e.target); });
+
 // ── INIT ──
 window.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('input.rng').forEach(rngFill);
   initSplash();
   initScrollyObserver();
 });
