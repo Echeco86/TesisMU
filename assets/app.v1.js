@@ -52,7 +52,11 @@ function fmtTickPct(v,signo){return (signo&&v>0?'+':'')+fmt(v,1)+'%';}
 // Nombres de región para mostrar (la clave de DATA queda igual para los joins)
 const REG_LABEL={'Ciudades +50,000':'Ciudades +50.000','Valles Turisticos':'Valles Turísticos'};
 function rlab(rn){return REG_LABEL[rn]||rn;}
-if(typeof Chart!=='undefined') Chart.defaults.locale='es-AR';
+if(typeof Chart!=='undefined'){
+  Chart.defaults.locale='es-AR';
+  // Movimiento reducido: sin animaciones en los gráficos
+  if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches) Chart.defaults.animation=false;
+}
 // Leyenda: al pasar el mouse por una serie se atenúan las demás (aislar una región entre nueve)
 function _fadeCol(c){ return (typeof c==='string'&&c.charAt(0)==='#')?c.slice(0,7)+'26':c; }
 function _fadeAny(c){ return Array.isArray(c)?c.map(_fadeCol):_fadeCol(c); }
@@ -490,6 +494,7 @@ function toggleYr(yr,chip){
   if(activeYrs.has(yr)&&activeYrs.size===1) return;
   if(activeYrs.has(yr)) activeYrs.delete(yr); else activeYrs.add(yr);
   chip.classList.toggle('off',!activeYrs.has(yr));
+  chip.setAttribute('aria-pressed',activeYrs.has(yr)?'true':'false');
   renderCharts();
 }
 function renderCharts(){
@@ -551,6 +556,7 @@ function renderCharts(){
       }
     });
   });
+  ariaCharts();
 }
 
 
@@ -720,6 +726,7 @@ function updateRegBar(ind){
       }
     }
   });
+  ariaCharts();
 }
 
 function updateRegTable(ind){
@@ -741,6 +748,7 @@ function updateRegTable(ind){
   });
 
   tbody.innerHTML = '';
+  setTimeout(updateScrollHint,0);
   sorted.forEach(function(rn, rank){
     var col = RCOLORS_MAP[rn] || '#888';
     var val80 = DATA.regions[rn][1980]?.[ind]||0;
@@ -876,6 +884,7 @@ function buildCmp(){
     [0,1,2].forEach(function(i){
       const d=document.createElement('div');d.className='cmp-c';
       const s=document.createElement('select');
+      s.setAttribute('aria-label','Región '+(i+1)+' a comparar');
       s.innerHTML='<option value="">— Región —</option>'+RNAMES2.map(function(r){return'<option value="'+r+'"'+(r===cmpRegSels[i]?' selected':'')+'>'+rlab(r)+'</option>';}).join('');
       s.onchange=function(){cmpRegSels[i]=s.value;buildCmpRegCards();renderCmpChart();buildHallazgos();};
       d.appendChild(s);
@@ -888,6 +897,7 @@ function buildCmp(){
     [0,1,2].forEach(function(i){
       const d=document.createElement('div');d.className='cmp-c';
       const s=document.createElement('select');
+      s.setAttribute('aria-label','Localidad '+(i+1)+' a comparar');
       s.innerHTML='<option value="">— Seleccionar —</option>'+LOCS.map(function(l){return'<option value="'+l+'"'+(l===cmpSels[i]?' selected':'')+'>'+dn(l)+'</option>';}).join('');
       s.onchange=function(){cmpSels[i]=s.value;buildCmpCards();renderCmpChart();};
       d.appendChild(s);
@@ -1051,6 +1061,7 @@ function renderCmpChart(){
       }
     }
   });
+  ariaCharts();
 }
 
 // ── CONCLUSIONES ──
@@ -1117,6 +1128,7 @@ function buildConclusiones(){
   });
   buildConcTasas();
   buildConcLCR();
+  ariaCharts();
 }
 
 // ── Tasa de crecimiento anual compuesta por década (provincia total) ──
@@ -1348,6 +1360,7 @@ function buildAnalisis(){
   }
   buildPatrones();
   buildTop10();
+  ariaCharts();
 }
 
 // ── Distribución de patrones de crecimiento (1980→2020) ──
@@ -1519,6 +1532,7 @@ function buildAnimScatter(yr){
       }
     }
   });
+  ariaCharts();
 }
 
 function buildTrayectoria(){
@@ -1561,6 +1575,7 @@ function buildTrayectoria(){
       }
     }
   });
+  ariaCharts();
 }
 
 function initAnalisisExtras(){
@@ -1651,6 +1666,76 @@ function exportCSV(){
   a.click();
 }
 
+// ── Descripción accesible de cada gráfico (role="img" + aria-label con la conclusión) ──
+// Se recalcula después de cada redibujo con el estado actual (año, región, indicador, localidad).
+function _ariaSet(id,txt){
+  var c=document.getElementById(id); if(!c) return;
+  c.setAttribute('role','img'); c.setAttribute('aria-label',txt);
+}
+function _g(a,b){ return a>0&&b!=null?(b-a)/a*100:null; }
+function ariaCharts(){ try{ _ariaCharts(); }catch(e){ console.warn('ariaCharts:',e); } }
+function _ariaCharts(){
+  var T=DATA.totals, R=DATA.regions, INDS={pob:'Población',pix:'Superficie construida',den:'Densidad construida',nuc:'Núcleos'};
+  var UN={pob:'habitantes',pix:'ha',den:'m² BU/píxel',nuc:'núcleos'};
+  // Gráficos de la localidad seleccionada (mapa)
+  var ld=selectedMun&&DATA.localities[selectedMun];
+  if(ld){
+    ['pob','pix','den','nuc'].forEach(function(ind,i){
+      var a=(ld.data[1980]||{})[ind], b=(ld.data[2020]||{})[ind];
+      var d=ind==='den'?1:0;
+      _ariaSet('chL'+(i+1), INDS[ind]+' de '+dn(selectedMun)+': '+fmt(a,d)+' '+UN[ind]+' en 1980 y '+fmt(b,d)+' '+UN[ind]+' en '+(ind==='pob'?'2022 (censo)':'2020')+'; variación '+fmtPct(_g(a,b))+'.');
+    });
+  }
+  // Análisis regional
+  var rind=(document.getElementById('regInd')||{}).value||'pob';
+  var rg=RNAMES.map(function(rn){ return {rn:rn,g:_g((R[rn][1980]||{})[rind],(R[rn][2020]||{})[rind]),v:(R[rn][regYr]||{})[rind]||0}; });
+  var byG=rg.slice().sort(function(a,b){return b.g-a.g;}), byV=rg.slice().sort(function(a,b){return b.v-a.v;});
+  _ariaSet('chRegTime','Evolución de '+INDS[rind].toLowerCase()+' por región, 1980–2020'+(regEsc==='norm'?', en base 100':'')+'. Mayor crecimiento: '+rlab(byG[0].rn)+' ('+fmtPct(byG[0].g)+'); menor: '+rlab(byG[byG.length-1].rn)+' ('+fmtPct(byG[byG.length-1].g)+').');
+  _ariaSet('chRegBar',INDS[rind]+' por región en '+regYr+': encabeza '+rlab(byV[0].rn)+' con '+fmt(byV[0].v,rind==='den'?1:0)+' '+UN[rind]+'; último '+rlab(byV[byV.length-1].rn)+' con '+fmt(byV[byV.length-1].v,rind==='den'?1:0)+'.');
+  // Análisis exploratorio
+  var rf=(document.getElementById('aRegFilt')||{}).value||'', reg=rf?' ('+rlab(rf)+')':'';
+  var locs=LOCS.filter(function(l){ return !rf||DATA.localities[l].region_nombre===rf; });
+  var n1=0,over=0,n2=0,nucMas=0,n3=0;
+  locs.forEach(function(l){
+    var d80=DATA.localities[l].data[1980]||{}, d=DATA.localities[l].data[aYr]||{};
+    if(d.pob>0&&d.pix>0) n1++;
+    if(d80.pob&&d80.pix&&d.pob&&d.pix){ n2++; if(_g(d80.pix,d.pix)>_g(d80.pob,d.pob)) over++; }
+    if(d80.nuc&&d80.pix&&d.nuc&&d.pix){ n3++; if(_g(d80.nuc,d.nuc)>_g(d80.pix,d.pix)) nucMas++; }
+  });
+  _ariaSet('chScatter1','Superficie construida vs. densidad construida de '+n1+' localidades en '+aYr+reg+'; cada punto es una localidad, con el color de su región.');
+  _ariaSet('chScatter2',aYr==1980?'Crecimiento poblacional vs. expansión superficial: elegí un año de corte posterior a 1980.':over+' de '+n2+' localidades'+reg+' quedan por encima de la diagonal: su superficie construida creció más que su población entre 1980 y '+aYr+'.');
+  var baja=RNAMES.filter(function(rn){ return (R[rn][aYr]||{}).den<(R[rn][1980]||{}).den; }).length;
+  _ariaSet('chDenEvol','La densidad construida bajó en '+baja+' de '+RNAMES.length+' regiones entre 1980 y '+aYr+'.');
+  _ariaSet('chScatter3',aYr==1980?'Fragmentación: elegí un año de corte posterior a 1980.':'En '+nucMas+' de '+n3+' localidades'+reg+' los núcleos crecieron más que la superficie construida entre 1980 y '+aYr+'.');
+  var pc={},pt=0; locs.forEach(function(l){ var p=clasificarPatron(l); if(p){ pc[p.label]=(pc[p.label]||0)+1; pt++; } });
+  var pm=Object.keys(pc).sort(function(a,b){return pc[b]-pc[a];})[0];
+  if(pm) _ariaSet('chPatrones','Patrón de crecimiento más frecuente'+reg+': '+pm+' ('+pc[pm]+' de '+pt+' localidades clasificadas).');
+  var yrEnd=(aYr==1980)?2020:aYr, best=null;
+  locs.forEach(function(l){ var a=(DATA.localities[l].data[1980]||{}).pix, b=(DATA.localities[l].data[yrEnd]||{}).pix; if(a>=30&&b){ var g=_g(a,b); if(!best||g>best.g) best={l:l,g:g}; } });
+  if(best) _ariaSet('chTop10','Diez localidades con mayor expansión de la superficie construida 1980–'+yrEnd+reg+'; encabeza '+dn(best.l)+' ('+fmtPct(best.g)+').');
+  var ay=YEARS_ARR[animYrIdx]||2020;
+  _ariaSet('chAnimScatter','Población vs. superficie construida de cada localidad en '+ay+reg+', escala '+(aLog?'logarítmica':'lineal')+'.');
+  var tl=(document.getElementById('trajLoc')||{}).value, tld=tl&&DATA.localities[tl];
+  if(tld) _ariaSet('chTrayectoria','Trayectoria de '+dn(tl)+': superficie construida de '+fmt((tld.data[1980]||{}).pix)+' a '+fmt((tld.data[2020]||{}).pix)+' ha y población de '+fmt((tld.data[1980]||{}).pob)+' a '+fmt((tld.data[2020]||{}).pob)+' habitantes entre 1980 y 2022.');
+  // Comparador
+  var ci=(document.getElementById('cmpInd')||{}).value||'pob', sels=(cmpModo==='region'?cmpRegSels:cmpSels).filter(Boolean);
+  var cg=sels.map(function(s){ var src=cmpModo==='region'?R[s]:(DATA.localities[s]||{}).data; if(!src) return ''; return (cmpModo==='region'?rlab(s):dn(s))+' '+fmtPct(_g((src[1980]||{})[ci],(src[2020]||{})[ci])); }).filter(Boolean).join(', ');
+  if(cg){
+    _ariaSet('chCmp',INDS[ci]+' comparada'+(cmpEsc==='norm'?' en base 100 (1980)':' en valores absolutos')+'. Variación 1980–2020: '+cg+'.');
+    _ariaSet('chCmpRel','Crecimiento relativo de '+INDS[ci].toLowerCase()+' respecto de 1980: '+cg+'.');
+  }
+  // Conclusiones
+  _ariaSet('chConcExp','Índice base 100 en 1980: en 2020 la superficie construida llega a '+Math.round(T[2020].pix/T[1980].pix*100)+' y la población a '+Math.round(T[2020].pob/T[1980].pob*100)+'.');
+  _ariaSet('chConcDen','Densidad construida provincial: '+fmt(T[1980].den,1)+' m² BU/píxel en 1980 y '+fmt(T[2020].den,1)+' en 2020.');
+  var dec=[[1980,1990],[1990,2000],[2000,2010],[2010,2020]], cg2=function(a,b){return (Math.pow(b/a,1/10)-1)*100;};
+  var supMas=dec.filter(function(d){ return cg2(T[d[0]].pix,T[d[1]].pix)>cg2(T[d[0]].pob,T[d[1]].pob); }).length;
+  var dmax=dec.slice().sort(function(a,b){ return cg2(T[b[0]].pix,T[b[1]].pix)-cg2(T[a[0]].pix,T[a[1]].pix); })[0];
+  _ariaSet('chConcTasas','La tasa anual de la superficie construida supera a la de la población en '+supMas+' de 4 décadas; la mayor es '+dmax[0]+'–'+dmax[1]+' ('+fmtNum(cg2(T[dmax[0]].pix,T[dmax[1]].pix),2)+'% anual).');
+  var lc=RNAMES.map(function(rn){ var a=R[rn][1980],b=R[rn][2020]; var pg=Math.log(b.pob/a.pob); return pg>0?{rn:rn,v:Math.log(b.pix/a.pix)/pg}:null; }).filter(Boolean);
+  var lmax=lc.slice().sort(function(a,b){return b.v-a.v;})[0];
+  _ariaSet('chConcLCR','LCRPGR 1980–2020 mayor que 1 en '+lc.filter(function(r){return r.v>1;}).length+' de '+lc.length+' regiones: el suelo se consume más rápido que lo que crece la población. Máximo: '+rlab(lmax.rn)+' ('+fmtNum(lmax.v,2)+').');
+}
+
 // Sliders .rng: el tramo recorrido se pinta con --pct
 function rngFill(el){
   var mn=+el.min||0, mx=+el.max||100;
@@ -1658,8 +1743,17 @@ function rngFill(el){
 }
 document.addEventListener('input',function(e){ if(e.target.classList&&e.target.classList.contains('rng')) rngFill(e.target); });
 
+// Tabla regional: sombra y aviso cuando hay columnas fuera de vista
+function updateScrollHint(){
+  var w=document.getElementById('regTableWrap'); if(!w) return;
+  var f=w.parentElement, more=w.scrollWidth-w.clientWidth-w.scrollLeft>4;
+  f.classList.toggle('overflowing',more);
+}
+window.addEventListener('resize',updateScrollHint);
+
 // ── INIT ──
 window.addEventListener('DOMContentLoaded',()=>{
+  var rtw=document.getElementById('regTableWrap'); if(rtw) rtw.addEventListener('scroll',updateScrollHint,{passive:true});
   document.querySelectorAll('input.rng').forEach(rngFill);
   initSplash();
   initScrollyObserver();
@@ -1756,13 +1850,19 @@ function openCV(){ document.getElementById('cvModal').style.display='flex'; }
 function closeCV(){ document.getElementById('cvModal').style.display='none'; }
 
 // ══ SCROLLYTELLING ══
+// Intro: las tarjetas son visibles por defecto. Solo se animan si hay IntersectionObserver y no se
+// pidió movimiento reducido; a los 2,5 s se muestran igual (antes podían quedar en blanco).
+var _scrollyObs=null;
 function initScrollyObserver(){
-  var items=document.querySelectorAll('.sc-item');
-  if(!items.length) return;
-  var obs=new IntersectionObserver(function(entries){
-    entries.forEach(function(e){ if(e.isIntersecting) e.target.classList.add('vis'); });
-  },{threshold:0.15});
-  items.forEach(function(it){ obs.observe(it); });
+  var box=document.querySelector('.sc-chapters'), items=document.querySelectorAll('.sc-item');
+  if(!box||!items.length||_scrollyObs) return;
+  if(!('IntersectionObserver' in window)||window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  box.classList.add('reveal');
+  _scrollyObs=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('vis'); _scrollyObs.unobserve(e.target); } });
+  },{threshold:0.05});
+  items.forEach(function(it){ _scrollyObs.observe(it); });
+  setTimeout(function(){ items.forEach(function(it){ it.classList.add('vis'); }); },2500);
 }
 function goToMapa(){
   var btn=document.querySelector('nav button:nth-child(2)');

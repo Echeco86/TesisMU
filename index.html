@@ -65,13 +65,13 @@ main{padding:18px 28px 50px;flex:1}#mapa.section.active{padding:0;margin:0;}
 .section{display:none}.section.active{display:block}
 .yr-row{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:9px 14px;background:var(--card);border:1px solid var(--border);border-radius:8px}
 .yr-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-right:4px}
-.yr-chip{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;cursor:pointer;padding:4px 10px;border-radius:16px;border:1px solid transparent;transition:all .2s;user-select:none}
+.yr-chip{display:flex;align-items:center;gap:5px;font-family:inherit;background:transparent;font-size:11px;font-weight:700;cursor:pointer;padding:4px 10px;border-radius:16px;border:1px solid transparent;transition:all .2s;user-select:none}
 .yr-chip.off{opacity:.3;filter:grayscale(.6)}
 .yr-sw{width:9px;height:9px;border-radius:50%}
 .ctrl{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .ctrl-g{display:flex;flex-direction:column;gap:3px}
 .ctrl-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
-select,input[type=text],input[type=range]{background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:7px 11px;border-radius:6px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none}
+select,input[type=text],input[type=search],input[type=range]{background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'Space Mono',monospace;font-size:12px;padding:7px 11px;border-radius:6px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none}
 input[type=range]{padding:3px 0;cursor:pointer}
 select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;padding-right:26px}
 select:focus,input:focus{border-color:var(--text)}
@@ -137,6 +137,16 @@ input[type=range].rng:focus-visible{outline:2px solid var(--text);outline-offset
 .reg-esc{margin:6px 0 10px}
 .reg-yr-pills{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
 #regTable{width:100%;border-collapse:collapse}
+/* Tabla regional: primera columna fija y señal de scroll horizontal */
+.scroll-frame{position:relative}
+.scroll-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.scroll-frame::after{content:'';position:absolute;top:0;right:0;bottom:0;width:32px;pointer-events:none;background:linear-gradient(to right,rgba(26,26,26,0),rgba(26,26,26,.10));opacity:0;transition:opacity .2s}
+.scroll-frame.overflowing::after{opacity:1}
+.scroll-hint{display:none;margin:6px 0 0;font-size:10px;color:var(--muted);text-align:right;text-transform:uppercase;letter-spacing:.08em}
+.scroll-frame.overflowing .scroll-hint{display:block}
+#regTable th:first-child,#regTable td:first-child{position:sticky;left:0;z-index:1;background:var(--card);box-shadow:1px 0 0 var(--border)}
+#regTable thead th:first-child{background:var(--surface);z-index:2}
+#regTable tbody tr:hover td:first-child{background:var(--surface)}
 #regTable thead th{background:var(--surface);padding:8px 12px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-bottom:2px solid var(--border);white-space:nowrap}
 #regTable thead th.yr-col{text-align:right;border-left:1px solid var(--border)}
 #regTable thead th.grow-col{text-align:right;border-left:2px solid var(--border);color:var(--text)}
@@ -430,8 +440,10 @@ footer a:hover{color:var(--text)}
 .msd{font-size:10px;color:#555;margin-top:5px;line-height:1.5;display:block}
 .sc-chapters{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border-bottom:1px solid var(--border)}
 @media(max-width:760px){.sc-chapters{grid-template-columns:1fr}}
-.sc-item{background:var(--bg);padding:36px 28px;opacity:0;transform:translateY(16px);transition:opacity .65s ease,transform .65s ease}
-.sc-item.vis{opacity:1;transform:none}
+.sc-item{background:var(--bg);padding:36px 28px}
+/* Solo se ocultan para animar cuando el JS lo habilita (ver initScrollyObserver) */
+.sc-chapters.reveal .sc-item{opacity:0;transform:translateY(12px);transition:opacity .4s ease,transform .4s ease}
+.sc-chapters.reveal .sc-item.vis{opacity:1;transform:none}
 .sc-item .sc-n{font-family:'Space Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);margin-bottom:10px}
 .sc-item .sc-big{font-family:'Fraunces',serif;font-size:clamp(44px,5vw,68px);font-weight:900;line-height:1;margin-bottom:14px}
 .sc-item .sc-pre{display:block;font-size:.38em;letter-spacing:.01em;margin-bottom:6px}
@@ -461,6 +473,11 @@ footer a:hover{color:var(--text)}
 nav button:focus-visible{outline-offset:-2px;border-radius:0}
 .pill:focus-visible,.yr-chip:focus-visible,.yr-btn:focus-visible,.sp-btn:focus-visible,.intro-cta:focus-visible{outline-offset:2px}
 select:focus-visible,input:focus-visible{border-color:var(--text);outline:2px solid var(--text);outline-offset:0}
+
+/* ── MOVIMIENTO REDUCIDO ── */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
 
 /* ── PRINT ── */
 @media print{
@@ -502,7 +519,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
   /* Tabla: controles apilados verticalmente */
   #tabla .ctrl{flex-direction:column;align-items:stretch;gap:8px}
   #tabla .ctrl .ctrl-g{width:100%}
-  #tabla .ctrl select,#tabla .ctrl input[type=text]{width:100%;box-sizing:border-box}
+  #tabla .ctrl select,#tabla .ctrl input[type=text],#tabla .ctrl input[type=search]{width:100%;box-sizing:border-box}
   /* Scroll horizontal: el div interno ya tiene overflow-x:auto;
      asegurar touch-scroll fluido y padding compacto */
   #tabla .tc>div{-webkit-overflow-scrolling:touch}
@@ -594,7 +611,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
   /* ── GENERAL: prevención de overflow horizontal ── */
   body{overflow-x:hidden}
   /* Tabla: override inline min-width:170px en input de búsqueda */
-  #tabla .ctrl input[type=text]{min-width:0!important;width:100%!important}
+  #tabla .ctrl input[type=text],#tabla .ctrl input[type=search]{min-width:0!important;width:100%!important}
   /* Mapa: ocultar timeline inferior (se superpone con el bottom sheet) */
   #mapTimeline{display:none!important}
   /* Intro: reducir paddings excesivos a 375px */
@@ -615,7 +632,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
       <div class="sp-eye">Maestría en Urbanismo · Universidad Nacional de Córdoba</div>
 
       <div>
-        <h1 class="sp-title">Transformaciones<br>Territoriales</h1>
+        <h2 class="sp-title">Transformaciones<br>Territoriales</h2>
         <p class="sp-sub">Dinámicas poblacionales y urbanas en municipios y comunas de la provincia de Córdoba · 1980–2022</p>
       </div>
 
@@ -840,7 +857,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
         </div>
         <div class="map-panel">
           <h4>Buscar Municipio</h4>
-          <input type="text" id="mapSearch" placeholder="Buscar localidad..." oninput="filterMapSearch(this.value)" style="width:100%;margin-bottom:8px">
+          <input type="search" id="mapSearch" aria-label="Buscar municipio o comuna en el mapa" placeholder="Buscar localidad..." oninput="filterMapSearch(this.value)" style="width:100%;margin-bottom:8px">
           <div id="mapMunList" style="max-height:120px;overflow-y:auto;font-size:11px"></div>
         </div>
         <div class="map-panel" id="densLegend" style="display:none">
@@ -880,13 +897,13 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
         <div id="chartLocMeta" style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:2px"></div>
 
         <!-- year chips -->
-        <div class="yr-row" style="margin-top:10px;margin-bottom:0;padding:8px 10px">
+        <div class="yr-row" role="group" aria-label="Años visibles en los gráficos" style="margin-top:10px;margin-bottom:0;padding:8px 10px">
           <span class="yr-lbl">Años:</span>
-          <div class="yr-chip on" data-yr="1980" onclick="toggleYr(1980,this)"><div class="yr-sw" style="background:#28c924"></div>1980</div>
-          <div class="yr-chip on" data-yr="1990" onclick="toggleYr(1990,this)"><div class="yr-sw" style="background:#1ec3e6"></div>1990</div>
-          <div class="yr-chip on" data-yr="2000" onclick="toggleYr(2000,this)"><div class="yr-sw" style="background:#854bfa"></div>2000</div>
-          <div class="yr-chip on" data-yr="2010" onclick="toggleYr(2010,this)"><div class="yr-sw" style="background:#e33943"></div>2010</div>
-          <div class="yr-chip on" data-yr="2020" onclick="toggleYr(2020,this)"><div class="yr-sw" style="background:#faa523"></div>2020</div>
+          <button type="button" class="yr-chip on" data-yr="1980" aria-pressed="true" onclick="toggleYr(1980,this)"><span class="yr-sw" style="background:#28c924"></span>1980</button>
+          <button type="button" class="yr-chip on" data-yr="1990" aria-pressed="true" onclick="toggleYr(1990,this)"><span class="yr-sw" style="background:#1ec3e6"></span>1990</button>
+          <button type="button" class="yr-chip on" data-yr="2000" aria-pressed="true" onclick="toggleYr(2000,this)"><span class="yr-sw" style="background:#854bfa"></span>2000</button>
+          <button type="button" class="yr-chip on" data-yr="2010" aria-pressed="true" onclick="toggleYr(2010,this)"><span class="yr-sw" style="background:#e33943"></span>2010</button>
+          <button type="button" class="yr-chip on" data-yr="2020" aria-pressed="true" onclick="toggleYr(2020,this)"><span class="yr-sw" style="background:#faa523"></span>2020</button>
         </div>
 
       </div>
@@ -972,7 +989,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
     </div>
     <div class="reg-ind-units" id="regIndUnits">habitantes · 1980–2020</div>
   </div>
-  <input type="hidden" id="regInd" value="pob">
+  <input type="hidden" id="regInd" value="pob" aria-label="Indicador regional seleccionado">
 
   <!-- TOP ROW: two charts -->
   <div class="reg-top">
@@ -1011,11 +1028,14 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
         <div class="cs">valores absolutos · crecimiento entre el primer y el último corte</div>
       </div>
     </div>
-    <div style="overflow-x:auto">
-      <table id="regTable">
-        <thead id="regTableHead"></thead>
-        <tbody id="regTableBody"></tbody>
-      </table>
+    <div class="scroll-frame">
+      <div class="scroll-x" id="regTableWrap" tabindex="0" role="region" aria-label="Tabla de evolución por región (se desplaza horizontalmente)">
+        <table id="regTable">
+          <thead id="regTableHead"></thead>
+          <tbody id="regTableBody"></tbody>
+        </table>
+      </div>
+      <p class="scroll-hint" aria-hidden="true">Deslizá para ver más →</p>
     </div>
   </div>
 
@@ -1024,7 +1044,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
 <section id="analisis" class="section">
   <div class="ctrl" style="margin-bottom:16px">
     <div class="ctrl-g" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px">
-      <span class="ctrl-lbl" style="color:var(--text);font-weight:700">Región</span>
+      <label class="ctrl-lbl" for="aRegFilt" style="color:var(--text);font-weight:700">Región</label>
       <select id="aRegFilt" onchange="buildAnalisis()" style="border-color:var(--text);font-weight:700"><option value="">Todas las regiones</option></select>
     </div>
     <div class="ctrl-g">
@@ -1082,7 +1102,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
       <h3>Trayectoria individual · 1980→2020</h3>
       <div class="cs">superficie construida vs. población · cada punto es un corte</div>
       <div style="margin-bottom:8px">
-        <select id="trajLoc" onchange="buildTrayectoria()" style="width:100%">
+        <select id="trajLoc" onchange="buildTrayectoria()" style="width:100%" aria-label="Localidad para la trayectoria individual">
           <option value="">— Seleccionar localidad —</option>
         </select>
       </div>
@@ -1100,9 +1120,9 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
       <button class="pill" onclick="setTblYr(2010,this)" style="border-color:#e33943;color:#8a1a20">2010</button>
       <button class="pill on" onclick="setTblYr(2020,this)" style="border-color:#faa523;color:#7a4a00">2020</button>
     </div></div>
-    <div class="ctrl-g"><span class="ctrl-lbl">Ordenar</span><select id="sortSel" onchange="renderTbl()"><option value="pob">Población ↓</option><option value="pix">Superficie ↓</option><option value="den">Densidad ↓</option><option value="nuc">Núcleos ↓</option><option value="nombre">Nombre A→Z</option></select></div>
-    <div class="ctrl-g"><span class="ctrl-lbl">Buscar</span><input type="text" id="srch" placeholder="Localidad..." oninput="renderTbl()" style="min-width:170px"></div>
-    <div class="ctrl-g"><span class="ctrl-lbl">Región</span><select id="regFilt" onchange="renderTbl()"><option value="">Todas</option></select></div>
+    <div class="ctrl-g"><label class="ctrl-lbl" for="sortSel">Ordenar</label><select id="sortSel" onchange="renderTbl()"><option value="pob">Población ↓</option><option value="pix">Superficie ↓</option><option value="den">Densidad ↓</option><option value="nuc">Núcleos ↓</option><option value="nombre">Nombre A→Z</option></select></div>
+    <div class="ctrl-g"><label class="ctrl-lbl" for="srch">Buscar</label><input type="search" id="srch" placeholder="Localidad..." oninput="renderTbl()" style="min-width:170px"></div>
+    <div class="ctrl-g"><label class="ctrl-lbl" for="regFilt">Región</label><select id="regFilt" onchange="renderTbl()"><option value="">Todas</option></select></div>
     <div class="ctrl-g"><span class="ctrl-lbl">Vista</span>
       <div style="display:flex;gap:4px">
         <button id="tblModoNorm" class="pill on" onclick="setTblModo('normal',this)" style="font-size:10px;padding:5px 8px">Por año</button>
@@ -1133,7 +1153,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
       </div>
     </div>
     <div class="ctrl-g">
-      <span class="ctrl-lbl">Indicador</span>
+      <label class="ctrl-lbl" for="cmpInd">Indicador</label>
       <select id="cmpInd" onchange="renderCmpChart()">
         <option value="pob">Población</option>
         <option value="pix">Superficie construida (ha)</option>
