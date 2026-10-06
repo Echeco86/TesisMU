@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://expansionurbana.vercel.app/sitemap.xml
