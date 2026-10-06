@@ -1,5 +1,15 @@
 # Dudas pendientes
 
+## Nuevas en la Tanda 3
+
+G. **Años de las citas**: la cita APA usa 2024 para la tesis y para el panel (tomado del JSON-LD original). ¿Es el año de defensa o de publicación en el repositorio? El README dice 2025.
+H. **Licencia CC BY 4.0**: placeholder visible en "Cómo citar" y en el JSON-LD (marcado con un comentario `PLACEHOLDER` en `index.html`). Confirmala o indicame otra.
+I. **Colores de patrón**: la rampa nueva (Compacta → Dispersión intensa) y "En declive" en azul también cambian el gráfico de patrones del Análisis Exploratorio. Antes "Dispersión intensa" y "En declive" eran casi el mismo color.
+J. **Rama `datos-1990`**: desde esta sesión no tengo permiso para borrar ramas en GitHub. Borrala en GitHub → Branches → ícono de papelera junto a `datos-1990`.
+K. **Rama `vercel/install-and-configure-vercel-w-6a0ezx`**: la creó el bot de Vercel para instalar Web Analytics, que ya está activo en `main` (`/_vercel/insights/script.js`). Se puede cerrar o borrar.
+L. **Lighthouse**: medido en local con la red del contenedor (Google Fonts lento o bloqueado y CDN servidas localmente). Conviene repetirlo en producción con PageSpeed Insights; los valores absolutos van a cambiar, la mejora relativa debería mantenerse.
+
+
 ## Nuevas en la Tanda 2
 
 A. ~~**La capa 1990 era una copia de la de 1980**~~: **resuelto** con el GeoJSON de píxeles 1990. Quedan dos detalles menores del archivo fuente: Valle Hermoso (281 píxeles contra 283 en `DATA`) y Casa Grande (29 contra 27) se intercambian 2 píxeles de borde (por eso también difiere su densidad media). El resto coincide con `DATA`. No afecta el mapa.

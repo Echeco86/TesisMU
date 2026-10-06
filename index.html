@@ -35,11 +35,15 @@
 <meta name="twitter:title" content="Expansión Urbana · Provincia de Córdoba (1980–2022)">
 <meta name="twitter:description" content="Análisis espaciotemporal del crecimiento urbano en 427 municipios y comunas de Córdoba. Datos GHSL e INDEC.">
 <meta name="twitter:image" content="https://expansionurbana.vercel.app/splash-bg.jpg">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&family=Fraunces:opsz,wght@9..144,300;9..144,600;9..144,900&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/chart.js@4.4.1/dist/chart.umd.js" integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" integrity="sha384-MinO0mNliZ3vwppuPOUnGa+iq619pfMhLVUXfC4LHwSCvF9H+6P/KO4Q7qBOYV5V" crossorigin="anonymous"/>
-<script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js" integrity="sha384-QfbOCebHNw8pQiPAOd2IFee2v2A5VYZxBk0+JGZ5H+3mfzVIp6zsQNkTsfGJot93" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" integrity="sha384-SYKAG6cglRMN0RVvhNeBY0r3FYKNOJtznwA0v7B5Vp9tr31xAHsZC0DqkQ/pZDmj" crossorigin="anonymous"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&family=Fraunces:opsz,wght@9..144,300;9..144,600;9..144,900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&family=Fraunces:opsz,wght@9..144,300;9..144,600;9..144,900&display=swap"></noscript>
+<script defer src="https://unpkg.com/chart.js@4.4.1/dist/chart.umd.js" integrity="sha384-dug+JxfBvklEQdJ4AYuBBAIScUz0bVN73xpy273gcAwHjb3qI0fXmuYNaNfdyYJG" crossorigin="anonymous"></script>
+<link rel="preload" as="style" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" integrity="sha384-MinO0mNliZ3vwppuPOUnGa+iq619pfMhLVUXfC4LHwSCvF9H+6P/KO4Q7qBOYV5V" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" integrity="sha384-MinO0mNliZ3vwppuPOUnGa+iq619pfMhLVUXfC4LHwSCvF9H+6P/KO4Q7qBOYV5V" crossorigin="anonymous"></noscript>
+<script defer src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js" integrity="sha384-QfbOCebHNw8pQiPAOd2IFee2v2A5VYZxBk0+JGZ5H+3mfzVIp6zsQNkTsfGJot93" crossorigin="anonymous"></script>
+<script defer src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" integrity="sha384-SYKAG6cglRMN0RVvhNeBY0r3FYKNOJtznwA0v7B5Vp9tr31xAHsZC0DqkQ/pZDmj" crossorigin="anonymous"></script>
 <!-- deck.gl se carga dinámicamente solo cuando el usuario activa Vista 3D -->
 <style>
 :root{
@@ -99,6 +103,22 @@ select:focus,input:focus{border-color:var(--text)}
 }
 .map-sidebar{position:absolute;top:10px;left:10px;z-index:1000;width:220px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:calc(100% - 20px);font-size:12px}
 .map-sheet-toggle{display:none}
+/* Glosario (i) */
+.gl-i{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:3px;padding:0;border:1px solid var(--muted);border-radius:50%;background:var(--card);color:var(--muted);font:italic 700 10px/1 'Fraunces',serif;cursor:pointer;vertical-align:1px;flex-shrink:0}
+.gl-i:hover,.gl-i[aria-expanded=true]{border-color:var(--text);color:var(--text)}
+.gl-pop{position:fixed;z-index:9500;background:var(--card);border:1px solid var(--text);border-radius:8px;padding:11px 13px;box-shadow:0 8px 28px rgba(0,0,0,.18);font-family:'Inter',sans-serif;font-size:12px;line-height:1.6;color:var(--text)}
+.gl-pop[hidden]{display:none}
+.gl-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:5px;font-family:'Fraunces',serif;font-size:13px}
+.gl-pop p{margin:0 0 7px}
+.gl-pop code{display:block;font-family:'Space Mono',monospace;font-size:10.5px;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:6px 8px;white-space:normal}
+.gl-x{background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;line-height:1;padding:0 2px}
+.choro-t{font-size:10px;font-weight:700;margin:8px 0 5px;line-height:1.4}
+.choro-i{display:grid;grid-template-columns:12px 1fr auto;gap:6px;align-items:center;font-size:10px;padding:1px 0}
+.choro-i i{width:12px;height:12px;border-radius:2px;border:1px solid rgba(0,0,0,.12)}
+.choro-i b{color:var(--muted);font-weight:400;font-variant-numeric:tabular-nums}
+.choro-pop .maplibregl-popup-content{font-family:'Space Mono',monospace;font-size:11px;padding:6px 9px;border-radius:5px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.pat-badge{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--text)}
+.pat-badge i{width:9px;height:9px;border-radius:2px;flex-shrink:0}
 .map-panel{background:rgba(255,255,255,0.95);border:1px solid var(--border);border-radius:8px;padding:10px;box-shadow:0 2px 12px rgba(0,0,0,.15);backdrop-filter:blur(4px)}
 .map-panel h4{font-family:'Fraunces',serif;font-size:13px;font-weight:700;margin-bottom:9px;padding-bottom:5px;border-bottom:1px solid var(--border)}
 #map{position:absolute;inset:0;}
@@ -215,6 +235,16 @@ tbody td{padding:7px 11px;font-size:12px;white-space:nowrap}
 .cmp-row{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--border)}
 .cmp-row:last-child{border-bottom:none}
 .cml{font-size:10px;color:var(--muted)}.cmv{font-family:'Fraunces',serif;font-size:14px;font-weight:700}
+.ficha-rank{margin-top:8px;padding-top:6px;border-top:2px solid var(--border)}
+.ficha-rank-t{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px}
+.rank-row{display:flex;justify-content:space-between;gap:6px;align-items:baseline;font-size:11px;padding:2px 0;white-space:nowrap}
+.rank-row>span:first-child{color:var(--muted)}
+.rank-nota{font-size:9px;color:var(--muted);margin-top:3px;line-height:1.4}
+.ficha-acciones{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.ficha-btn{flex:1;min-width:110px;padding:6px 8px;background:var(--card);color:var(--text);border:1px solid var(--text);border-radius:5px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer}
+.ficha-btn:hover{background:var(--surface)}
+.ficha-btn-main{background:var(--text);color:#fff}
+.ficha-btn-main:hover{background:#333}
 .map-info-row{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px}
 .map-info-row:last-child{border-bottom:none}
 .map-info-row span:first-child{color:var(--muted)}
@@ -316,6 +346,11 @@ footer a:hover{color:var(--text)}
 .nota-cortes{font-family:'Inter',sans-serif;font-size:12px;line-height:1.6;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--text);border-radius:6px;padding:9px 13px}
 .nota-cortes strong{color:var(--text)}
 .nota-chart{font-family:'Inter',sans-serif;font-size:11px;line-height:1.55;color:var(--muted);margin-top:8px}
+.theory-block a{color:var(--text);text-decoration:underline;text-underline-offset:2px}
+.cita{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:10px}
+.cita p{margin:0!important;font-size:12px!important;line-height:1.65!important;flex:1;word-break:break-word}
+.cita-btn{flex:0 0 auto;min-width:0}
+.cita-l{font-family:'Space Mono',monospace!important;font-size:9px!important;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)!important;margin:10px 0 4px!important}
 .stat-highlight{display:inline-block;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-family:'Fraunces',serif;font-weight:700;font-size:14px;margin:0 3px}
 
 /* ── SPLASH ── */
@@ -466,6 +501,20 @@ footer a:hover{color:var(--text)}
 /* ── 3D CANVAS ── */
 #btn3D{width:100%;margin-top:8px;padding:7px 10px;background:var(--text);color:#fff;border:none;border-radius:5px;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;cursor:pointer;transition:background .2s;letter-spacing:.05em}
 #btn3D.active{background:#854bfa}
+.btn-map2{width:100%;margin-top:6px;padding:7px 10px;background:var(--card);color:var(--text);border:1px solid var(--text);border-radius:5px;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;cursor:pointer;letter-spacing:.05em}
+.btn-map2.active{background:var(--text);color:#fff}
+/* Swipe 1980 | 2020 */
+#swipeWrap{position:absolute;inset:0;z-index:600;display:none;background:var(--bg)}
+.swipe-map{position:absolute;inset:0}
+#swipeHandle{position:absolute;top:0;bottom:0;width:4px;margin-left:-2px;background:#1a1a1a;cursor:ew-resize;touch-action:none;z-index:2}
+#swipeHandle span{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:#fff;border:2px solid #1a1a1a;display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+#swipeHandle:focus-visible span{outline:2px solid #1a1a1a;outline-offset:3px}
+.swipe-tag{position:absolute;top:12px;z-index:3;padding:4px 10px;border-radius:14px;font-family:'Space Mono',monospace;font-size:11px;font-weight:700;color:#fff;pointer-events:none}
+.swipe-tag-l{left:12px;background:#019101}
+#mapa.swipe-on .map-sidebar{display:none!important}
+.swipe-tag-r{right:12px;background:#a46905}
+.swipe-close{position:absolute;bottom:14px;right:56px;z-index:3;padding:6px 12px;background:var(--text);color:#fff;border:none;border-radius:5px;font-family:'Space Mono',monospace;font-size:10px;font-weight:700;cursor:pointer}
+@media(max-width:767px){.swipe-close{bottom:auto;top:12px;right:auto;left:50%;transform:translateX(-50%)}}
 #deckCanvas{position:absolute;inset:0;display:none;z-index:450}
 #deck3DInfo{position:absolute;top:10px;right:10px;z-index:460;background:rgba(255,255,255,.94);border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-family:'Space Mono',monospace;font-size:9px;display:none;line-height:1.7}
 
@@ -485,6 +534,30 @@ select:focus-visible,input:focus-visible{border-color:var(--text);outline:2px so
   #splash,#cvModal,nav{display:none!important}
   .section{display:block!important;page-break-after:always}
   #mapTimeline,.map-sidebar{display:none!important}
+}
+/* Ficha municipal imprimible (body.print-ficha): solo #fichaPrint, una página A4 */
+#fichaPrint{display:none}
+@media print{
+  @page{size:A4;margin:12mm}
+  body.print-ficha{display:block;background:#fff;min-height:0}
+  body.print-ficha>*:not(#fichaPrint){display:none!important}
+  body.print-ficha #fichaPrint{display:block!important;font-family:'Inter',sans-serif;font-size:10.5px;color:#1a1a1a;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #fichaPrint h2{font-family:'Fraunces',serif;font-size:24px;font-weight:900;margin:2px 0}
+  #fichaPrint h3{font-family:'Fraunces',serif;font-size:13px;margin:12px 0 5px;padding-bottom:3px;border-bottom:1.5px solid #1a1a1a}
+  .fp-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1a1a1a;padding-bottom:8px}
+  .fp-eye,.fp-meta{font-family:'Space Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#5c5c52}
+  .fp-svg-prov{width:96px;height:auto}
+  .fp-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;margin-top:10px;align-items:start}
+  .fp-img,.fp-svg{width:100%;height:auto;max-height:240px;object-fit:cover;border:1px solid #ddd9ce;border-radius:4px}
+  .fp-cap{font-size:8.5px;color:#5c5c52;margin-top:3px}
+  .fp-pat{margin:0}
+  .fp-rank{margin:0;padding-left:16px;line-height:1.6}
+  .fp-t{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+  .fp-t th{font-family:'Space Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:.06em;color:#5c5c52;text-align:right;border-bottom:1px solid #ddd9ce;padding:4px 6px;background:none;cursor:default}
+  .fp-t td{text-align:right;padding:4px 6px;border-bottom:1px solid #eceae3;white-space:normal}
+  .fp-t th:first-child,.fp-t td:first-child{text-align:left}
+  .fp-t small{color:#5c5c52}
+  .fp-foot{margin-top:12px;padding-top:6px;border-top:1px solid #ddd9ce;font-size:8px;color:#5c5c52;line-height:1.5;word-break:break-all}
 }
 
 /* ── MOBILE RESPONSIVO ── */
@@ -796,22 +869,22 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
   <div class="sc-chapters">
     <div class="sc-item" id="sc1">
       <div class="sc-n">01 · Hallazgo principal</div>
-      <div class="sc-big" style="color:#28c924">+155%</div>
+      <div class="sc-big" style="color:#037603">+155%</div>
       <div class="sc-txt">La expansión urbana provincial creció un <strong>155%</strong> entre 1980 y 2020, mientras la población lo hizo apenas un <strong>75%</strong>. Las ciudades crecen físicamente el doble de lo que crece su gente.</div>
     </div>
     <div class="sc-item" id="sc2">
       <div class="sc-n">02 · Punto de inflexión</div>
-      <div class="sc-big" style="color:#e33943"><span class="sc-pre">Década</span>2000–2010</div>
+      <div class="sc-big" style="color:#b60024"><span class="sc-pre">Década</span>2000–2010</div>
       <div class="sc-txt">El boom inmobiliario post-convertibilidad disparó la construcción periférica. La tasa de expansión casi <strong>duplicó</strong> la tasa de crecimiento poblacional, marcando el umbral donde la suburbanización se convirtió en patrón dominante.</div>
     </div>
     <div class="sc-item" id="sc3">
       <div class="sc-n">03 · Caso extremo</div>
-      <div class="sc-big" style="color:#854bfa">+388%</div>
+      <div class="sc-big" style="color:#6c27da">+388%</div>
       <div class="sc-txt">La mancha urbana de los <strong>Valles Turísticos</strong> creció un <strong>388%</strong> entre 1980 y 2020 (crecimiento total de la superficie construida), mientras su población lo hizo un 140%. Turismo residencial, segunda residencia y relocalización de clase media urbana explican la dinámica.</div>
     </div>
     <div class="sc-item" id="sc4">
       <div class="sc-n">04 · Fragmentación</div>
-      <div class="sc-big" style="color:#faa523">+94%</div>
+      <div class="sc-big" style="color:#865400">+94%</div>
       <div class="sc-txt">Los núcleos construidos pasaron de <strong>806 en 1980</strong> a <strong>1.566 en 2020</strong>. El crecimiento no fue continuo: el territorio se fragmentó en manchas discontinuas, ampliando los desafíos de infraestructura y servicios.</div>
     </div>
   </div>
@@ -855,11 +928,23 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
           </div>
           <div style="font-size:9px;color:var(--muted);margin-top:6px;text-align:center">Podés activar múltiples años</div>
           <button id="btn3D" onclick="toggle3D()">⬡ Vista 3D</button>
+          <button id="btnSwipe" class="btn-map2" aria-pressed="false" onclick="toggleSwipe()">⇆ Comparar 1980 | 2020</button>
         </div>
         <div class="map-panel">
           <h4>Buscar Municipio</h4>
           <input type="search" id="mapSearch" aria-label="Buscar municipio o comuna en el mapa" placeholder="Buscar localidad..." oninput="filterMapSearch(this.value)" style="width:100%;margin-bottom:8px">
           <div id="mapMunList" style="max-height:120px;overflow-y:auto;font-size:11px"></div>
+        </div>
+        <div class="map-panel" id="choroPanel">
+          <h4>Colorear municipios</h4>
+          <label class="ctrl-lbl" for="choroSel">Indicador</label>
+          <select id="choroSel" onchange="setChoro(this.value)" style="width:100%;margin-top:3px">
+            <option value="">Ninguno</option>
+            <option value="patron">Patrón de crecimiento</option>
+            <option value="gpob">Variación de población</option>
+            <option value="lcr">LCRPGR</option>
+          </select>
+          <div id="choroLegend" style="display:none"></div>
         </div>
         <div class="map-panel" id="densLegend" style="display:none">
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px;color:var(--muted)">Leyenda de densidad</div>
@@ -871,6 +956,13 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
         </div>
       </div>
       <div id="map"></div>
+      <div id="swipeWrap" aria-label="Comparador deslizante: 1980 a la izquierda, 2020 a la derecha">
+        <div id="swipeA" class="swipe-map"></div>
+        <div id="swipeB" class="swipe-map"></div>
+        <div class="swipe-tag swipe-tag-l">1980</div><div class="swipe-tag swipe-tag-r">2020</div>
+        <div id="swipeHandle" role="slider" tabindex="0" aria-label="Divisor 1980 | 2020" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span aria-hidden="true">⇆</span></div>
+        <button class="swipe-close" onclick="toggleSwipe()" aria-label="Cerrar comparador 1980 | 2020">✕ Cerrar</button>
+      </div>
       <canvas id="deckCanvas"
         role="img"
         aria-label="Mapa 3D de expansión urbana de la provincia de Córdoba. Visualización extruída por categoría de densidad construida (GHSL). Arrastrá para rotar, scroll para zoom."></canvas>
@@ -946,7 +1038,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
         </div>
         <div class="cc">
           <div class="cc-header">
-            <h3>Densidad construida</h3>
+            <h3>Densidad construida <button type="button" class="gl-i" data-glos="bu" aria-label="Qué significa: BU · superficie construida por píxel" aria-expanded="false" aria-controls="glosPop">i</button></h3>
             <button class="cc-flip-btn" onclick="flipCard(this)" aria-label="Ver definición">
               <svg width="13" height="13" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
@@ -957,7 +1049,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
         </div>
         <div class="cc">
           <div class="cc-header">
-            <h3>Núcleos de Construcción</h3>
+            <h3>Núcleos de construcción <button type="button" class="gl-i" data-glos="nucleos" aria-label="Qué significa: Núcleos de construcción" aria-expanded="false" aria-controls="glosPop">i</button></h3>
             <button class="cc-flip-btn" onclick="flipCard(this)" aria-label="Ver definición">
               <svg width="13" height="13" viewBox="0 0 12 12" fill="none"><path d="M2 4l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
@@ -1074,7 +1166,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
   <!-- Análisis derivados: patrones de crecimiento y ranking de expansión -->
   <div class="cg" style="margin-top:14px">
     <div class="cc">
-      <h3>Distribución de patrones de crecimiento</h3>
+      <h3>Distribución de patrones de crecimiento <button type="button" class="gl-i" data-glos="patrones" aria-label="Qué significa: Patrones de crecimiento 1980–2020" aria-expanded="false" aria-controls="glosPop">i</button></h3>
       <div class="cs" id="csPatrones">clasificación 1980→2020 · todas las localidades</div>
       <canvas id="chPatrones" style="max-height:260px"></canvas>
       <div class="nota-chart" id="notaPatrones"></div>
@@ -1233,6 +1325,17 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
       </tbody>
     </table>
   </div>
+
+  <div class="theory-block" id="como-citar">
+    <h3>Cómo citar</h3>
+    <p class="cita-l">Tesis (APA 7)</p>
+    <div class="cita"><p id="citaTesis">Echecolanea, J. M. (2024). <em>Transformaciones territoriales: dinámicas poblacionales y urbanas en municipios y comunas de la provincia de Córdoba (1980–2022)</em> [Tesis de maestría, Universidad Nacional de Córdoba]. Repositorio Digital Universitario. http://hdl.handle.net/11086/560262</p><button class="ficha-btn cita-btn" onclick="copyCita('citaTesis',this)" aria-live="polite">Copiar cita</button></div>
+    <p class="cita-l">Este panel</p>
+    <div class="cita"><p id="citaPanel">Echecolanea, J. M. (2024). <em>Transformaciones Territoriales: panel de datos sobre expansión urbana en la provincia de Córdoba</em> [Sitio web]. https://expansionurbana.vercel.app/</p><button class="ficha-btn cita-btn" onclick="copyCita('citaPanel',this)" aria-live="polite">Copiar cita</button></div>
+    <!-- PLACEHOLDER: licencia a confirmar por el autor (CC BY 4.0 propuesta) -->
+    <p><strong>Licencia de los datos derivados</strong> (indicadores por localidad y capas de densidad): <a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener license">Creative Commons Atribución 4.0 (CC BY 4.0)</a>. Podés usarlos y adaptarlos citando la fuente.</p>
+    <p><strong>Fuentes:</strong> población, INDEC (censos 1980–2022, datos públicos); superficie construida, GHSL GHS-BUILT-S R2022A © Unión Europea, Joint Research Centre (CC BY 4.0); límites municipales, Dirección General de Estadística y Censos de Córdoba.</p>
+  </div>
 </section>
 
 <!-- CONCLUSIONES -->
@@ -1252,7 +1355,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
       <canvas id="chConcExp" style="max-height:240px"></canvas>
     </div>
     <div class="cc">
-      <h3>Densidad construida provincial</h3>
+      <h3>Densidad construida provincial <button type="button" class="gl-i" data-glos="bu" aria-label="Qué significa: BU · superficie construida por píxel" aria-expanded="false" aria-controls="glosPop">i</button></h3>
       <div class="cs">m² construidos por píxel (BU medio) · GHSL 1980–2020</div>
       <canvas id="chConcDen" style="max-height:240px"></canvas>
     </div>
@@ -1265,7 +1368,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
       <canvas id="chConcTasas" style="max-height:240px"></canvas>
     </div>
     <div class="cc">
-      <h3>Eficiencia del uso del suelo · LCRPGR <span style="font-size:9px;color:var(--muted);font-weight:400">ODS 11.3.1</span></h3>
+      <h3>Eficiencia del uso del suelo · LCRPGR <span style="font-size:9px;color:var(--muted);font-weight:400">ODS 11.3.1</span> <button type="button" class="gl-i" data-glos="lcrpgr" aria-label="Qué significa: LCRPGR · ODS 11.3.1" aria-expanded="false" aria-controls="glosPop">i</button></h3>
       <div class="cs">ratio consumo de suelo / crecimiento poblacional · 1980–2020 · &gt;1 = el suelo se consume más rápido de lo que crece la población</div>
       <canvas id="chConcLCR" style="max-height:240px"></canvas>
     </div>
@@ -1340,13 +1443,14 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
   </div>
 </section>
 </main>
+<div id="fichaPrint" aria-hidden="true"></div>
 <footer>
   <div><strong>Mgtr. Lic. Juan Manuel Echecolanea</strong> &nbsp;·&nbsp; <span>Echecolaneajuan&#64;gmail.com</span></div>
-  <div style="display:flex;gap:10px;align-items:center"><span>Expansión Urbana · Córdoba · Censos 1980–2022 · GHSL 1980–2020</span></div>
+  <div style="display:flex;gap:10px;align-items:center"><span>Expansión Urbana · Córdoba · Censos 1980–2022 · GHSL 1980–2020</span> · <a href="#teorico" onclick="event.preventDefault();irACitar()">Cómo citar</a></div>
 </footer>
 
-<script src="assets/data.v1.js"></script>
-<script src="assets/app.v1.js"></script>
+<script defer src="assets/data.v1.js"></script>
+<script defer src="assets/app.v2.js"></script>
 
 <!-- Schema.org structured data -->
 <script type="application/ld+json">
@@ -1364,7 +1468,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
       "email": "echecolaneajuan@gmail.com",
       "affiliation": {
         "@type": "Organization",
-        "name": "Universidad Nacional de Córdoba — Maestría en Urbanismo"
+        "name": "Universidad Nacional de Córdoba — Facultad de Arquitectura, Urbanismo y Diseño (FAUDI)"
       }
     },
     "datePublished": "2024",
@@ -1378,32 +1482,131 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
       }
     },
     "temporalCoverage": "1980/2022",
-    "keywords": ["expansión urbana", "Córdoba", "GHSL", "INDEC", "urbanismo", "Argentina", "municipios"],
-    "variableMeasured": ["superficie construida", "población", "densidad urbana", "núcleos urbanos"],
-    "distribution": {
-      "@type": "DataDownload",
-      "encodingFormat": "application/geo+json",
-      "contentUrl": "https://expansionurbana.vercel.app/2020_v2.geojson"
-    }
+    "keywords": [
+      "expansión urbana",
+      "Córdoba",
+      "GHSL",
+      "INDEC",
+      "urbanismo",
+      "Argentina",
+      "municipios"
+    ],
+    "variableMeasured": [
+      {
+        "@type": "PropertyValue",
+        "name": "Población",
+        "unitText": "habitantes"
+      },
+      {
+        "@type": "PropertyValue",
+        "name": "Superficie construida",
+        "unitText": "ha (1 píxel GHSL = 1 ha)"
+      },
+      {
+        "@type": "PropertyValue",
+        "name": "Densidad construida",
+        "unitText": "m² construidos por píxel (valor BU medio)"
+      },
+      {
+        "@type": "PropertyValue",
+        "name": "Núcleos de construcción",
+        "unitText": "cantidad"
+      }
+    ],
+    "distribution": [
+      {
+        "@type": "DataDownload",
+        "name": "Capa de densidad construida 1980",
+        "encodingFormat": "application/geo+json",
+        "contentUrl": "https://expansionurbana.vercel.app/1980_v2.geojson"
+      },
+      {
+        "@type": "DataDownload",
+        "name": "Capa de densidad construida 1990",
+        "encodingFormat": "application/geo+json",
+        "contentUrl": "https://expansionurbana.vercel.app/1990_v3.geojson"
+      },
+      {
+        "@type": "DataDownload",
+        "name": "Capa de densidad construida 2000",
+        "encodingFormat": "application/geo+json",
+        "contentUrl": "https://expansionurbana.vercel.app/2000_v2.geojson"
+      },
+      {
+        "@type": "DataDownload",
+        "name": "Capa de densidad construida 2010",
+        "encodingFormat": "application/geo+json",
+        "contentUrl": "https://expansionurbana.vercel.app/2010_v2.geojson"
+      },
+      {
+        "@type": "DataDownload",
+        "name": "Capa de densidad construida 2020",
+        "encodingFormat": "application/geo+json",
+        "contentUrl": "https://expansionurbana.vercel.app/2020_v2.geojson"
+      }
+    ],
+    "@id": "https://expansionurbana.vercel.app/#dataset",
+    "isAccessibleForFree": true,
+    "citation": "http://hdl.handle.net/11086/560262",
+    "isBasedOn": [
+      {
+        "@type": "Dataset",
+        "name": "Censos Nacionales de Población, Hogares y Vivienda 1980–2022",
+        "creator": {
+          "@type": "Organization",
+          "name": "INDEC"
+        }
+      },
+      {
+        "@type": "Dataset",
+        "name": "GHS-BUILT-S R2022A",
+        "creator": {
+          "@type": "Organization",
+          "name": "European Commission, Joint Research Centre"
+        },
+        "license": "https://creativecommons.org/licenses/by/4.0/"
+      }
+    ]
   },
   {
     "@context": "https://schema.org",
     "@type": "ScholarlyArticle",
+    "@id": "http://hdl.handle.net/11086/560262",
     "name": "Transformaciones territoriales: dinámicas poblacionales y urbanas en municipios y comunas de la provincia de Córdoba (1980–2022)",
+    "headline": "Transformaciones territoriales: dinámicas poblacionales y urbanas en municipios y comunas de la provincia de Córdoba (1980–2022)",
+    "genre": "Tesis de maestría (Maestría en Urbanismo)",
     "author": {
       "@type": "Person",
       "name": "Juan Manuel Echecolanea",
-      "email": "echecolaneajuan@gmail.com"
+      "email": "echecolaneajuan@gmail.com",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Universidad Nacional de Córdoba — Facultad de Arquitectura, Urbanismo y Diseño (FAUDI)"
+      }
     },
+    "contributor": [
+      {
+        "@type": "Person",
+        "name": "Leticia Gómez",
+        "roleName": "Directora"
+      },
+      {
+        "@type": "Person",
+        "name": "Laura Luna",
+        "roleName": "Codirectora"
+      }
+    ],
     "datePublished": "2024",
     "inLanguage": "es",
     "url": "http://hdl.handle.net/11086/560262",
+    "identifier": "http://hdl.handle.net/11086/560262",
     "publisher": {
       "@type": "Organization",
       "name": "Universidad Nacional de Córdoba"
     },
     "about": "Análisis espaciotemporal de la expansión urbana de 427 municipios y comunas de la provincia de Córdoba, Argentina, entre 1980 y 2022.",
-    "keywords": "expansión urbana, urbanismo, Córdoba, Argentina, GHSL, INDEC"
+    "keywords": "expansión urbana, urbanismo, Córdoba, Argentina, GHSL, INDEC",
+    "isAccessibleForFree": true
   }
 ]
 </script>

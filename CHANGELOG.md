@@ -90,3 +90,46 @@ Ningún cambio modifica valores analíticos: `DATA` y `MUNICIPIOS_GJ` se verific
   - Superficie creciente 1980 → 1990 → 2000 (86.550 → 92.579 → 110.597 ha) y misma grilla que los otros años (distancia mediana entre vértices: 0 m).
 - La versión de cada capa queda en `DENS_GEOJSON_VER` / `DENS_TILES_VER`. Script reproducible: `tools/build-capa-pixeles.sh`.
 
+
+## Tanda 3 · Funciones nuevas (rama `feat/tanda-3`)
+
+Primero se sube `assets/app.v1.js` a `app.v2.js`, porque la v1 ya está en producción con caché immutable.
+
+- **Estado en la URL**: `#seccion`, `#mapa/loc=villa-carlos-paz`, `#comparador/loc=a,b,c` y `#comparador/reg=a,b,c`.
+  - Atrás y Adelante funcionan.
+  - Los enlaces directos saltean la portada.
+  - La ficha tiene un botón "Copiar enlace".
+  - Los slugs salen del nombre con tildes; los 427 son únicos.
+- **Ficha imprimible** (A4, una página): mini mapa (captura del mapa o contorno SVG), recuadro de la provincia, patrón, ranking, indicadores por corte, comparación con la región y pie con fuentes, cita y enlace.
+- **Comparador deslizante 1980 | 2020**: dos mapas sincronizados recortados con `clip-path`; el divisor se arrastra con mouse, con el dedo o con el teclado. Implementación propia, sin dependencias nuevas.
+- **Coroplético** de los 427 municipios por patrón, variación de población o LCRPGR, con leyenda, conteos y tooltip.
+  - Escalas validadas: rampa ordinal para los patrones y escalas divergentes con neutro gris.
+  - "Dispersión intensa" y "En declive" ya no comparten casi el mismo color; el patrón se muestra como chip con texto en tinta.
+- **Ranking** en la ficha: puesto en la provincia y percentil en la región para población, superficie, densidad y núcleos.
+- **Cómo citar**: citas APA 7 de la tesis (handle) y del panel con botón para copiar, licencia CC BY 4.0 (placeholder a confirmar) y licencias de las fuentes. El JSON-LD queda como `Dataset` (variables con unidades, fuentes, 5 descargas) + `ScholarlyArticle`.
+- **Glosario (i)** para BU, núcleos, LCRPGR y cada patrón, con definición y fórmula tomadas de Metodología y de `clasificarPatron`. Popover accesible.
+- **Rendimiento y accesibilidad de cierre**:
+  - Scripts con `defer`; Google Fonts y el CSS de MapLibre sin bloquear (preload + noscript); preconnect a fuentes.
+  - Las cifras grandes de la intro usan tonos del año con contraste ≥ 4,5:1.
+
+## Verificación final
+
+- `grep "hab/km"` en HTML, JS y JSON publicados: **0 apariciones**.
+- **Consola**: sin errores en las 8 secciones × 3 tamaños (1440×900, 768×1024, 375×812), incluidos el 3D, la ficha y "Ver análisis". Solo quedan fallos de red del entorno de prueba (OpenFreeMap y Google Fonts bloqueados) y teselas que MapLibre cancela al cambiar de vista.
+- **Datos**: `DATA` y `MUNICIPIOS_GJ` idénticos al original (`54ac153`) en cada commit.
+- **Lighthouse móvil** (local, misma red y CDN servidas localmente en las dos versiones; mediana de 3 corridas):
+
+  | | Original (`54ac153`) | Tanda 3 |
+  |---|---|---|
+  | Performance | 61 | **98** |
+  | Accessibility | 100* | **100** |
+  | SEO | 100 | **100** |
+  | FCP | 5,0 s | 1,0 s |
+  | LCP | 9,2 s | 1,7 s |
+  | Total Blocking Time | 93 ms | 83 ms |
+  | Peso transferido, primera carga | **1.422 KiB** (16 pedidos) | **694 KiB** (18 pedidos) |
+
+  \* En el original, las tarjetas de la intro estaban ocultas (`opacity:0`) y Lighthouse no evaluaba su contraste.
+
+- **Mayores ahorros de la primera carga**: la portada pasa de 409 KiB a 0 en móvil (64 KiB en escritorio), la foto del autor de 407 KiB a 0 (carga diferida) y el HTML de 183 KiB a 28 KiB (más `data` 138 KiB + `app` 43 KiB, cacheables por un año).
+- **Primera apertura del mapa** (capa 2020): de ~10 MB con gzip (34 MB sin comprimir) a **134 KB** con PMTiles.
