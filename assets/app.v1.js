@@ -110,12 +110,14 @@ function showSec(id,btn){
 
 // ── MAP (MapLibre GL JS) ──
 
+// Rampa de 5 clases por año: mismo tono que el año, luminosidad OKLCH 0,73 → 0,41 en pasos de 0,08
+// (validada como rampa ordinal: monótona, ΔL ≥ 0,06, extremo claro ≥ 2:1 sobre el crema).
 const FGB_COLORS = {
-  1980: ['#d6f5d4', '#aef0ab', '#86eb82', '#5de659', '#28c924'],
-  1990: ['#d4edf2', '#a9e3ef', '#7ed9ec', '#53cfe9', '#1ec3e6'],
-  2000: ['#e4dbf5', '#cdb9f6', '#b797f7', '#a175f8', '#854bfa'],
-  2010: ['#f2d8da', '#eeb3b6', '#eb8d93', '#e7686f', '#e33943'],
-  2020: ['#f5e9d5', '#f6d9ab', '#f7c981', '#f8b957', '#faa523'],
+  1980: ['#70be6a', '#38aa33', '#019101', '#037603', '#025b02'],
+  1990: ['#6bb4c8', '#2c9eb9', '#0a859e', '#046c81', '#005465'],
+  2000: ['#ab95fb', '#9571f9', '#814cf0', '#6c27da', '#560fb3'],
+  2010: ['#eb8783', '#e25f5e', '#d2323c', '#b60024', '#8f011a'],
+  2020: ['#cf9d61', '#c07f21', '#a46905', '#865400', '#674105'],
 };
 const FGB_CAT_LABELS = ['Muy Baja','Baja','Media','Alta','Muy Alta'];
 
@@ -196,7 +198,7 @@ async function _ensureYearLayer(yr){
       source:'year-'+yr,
       layout:{visibility:layerActive[yr]?'visible':'none'},
       paint:{'fill-color':_densColorExpr(yr),'fill-opacity':layerOpacity[yr]}
-    },'muni-outline');
+    },map.getLayer('provincia-limite')?'provincia-limite':'muni-outline');
     _loadingYrs[yr]=false;
     if(loadMsg)loadMsg.style.display='none';
   }catch(e){
@@ -246,7 +248,35 @@ function _loadBaseStyle(){
     });
 }
 
+// Límite provincial. Con PROVINCIA_URL (GeoJSON oficial, p. ej. de IDECOR) se dibuja siempre;
+// si no, se toma la capa boundary (admin_level 4) de OpenMapTiles del mapa base.
+var PROVINCIA_URL=null;
+function _addProvinciaLayer(){
+  var paint={'line-color':'#1a1a1a','line-width':1.8,'line-opacity':0.75};
+  if(PROVINCIA_URL){
+    map.addSource('provincia',{type:'geojson',data:PROVINCIA_URL});
+    map.addLayer({id:'provincia-limite',type:'line',source:'provincia',paint:paint},'muni-outline');
+    return;
+  }
+  var st=map.getStyle(), vec=Object.keys(st.sources).filter(function(k){return st.sources[k].type==='vector';})[0];
+  if(!vec) return; // modo de respaldo: sin mapa base no hay límites
+  map.addLayer({id:'provincia-limite',type:'line',source:vec,'source-layer':'boundary',
+    filter:['all',['==',['to-number',['get','admin_level']],4],['!=',['to-number',['coalesce',['get','maritime'],0]],1]],
+    paint:paint},'muni-outline');
+}
+
+// Hoja inferior del mapa en móvil: arranca colapsada; se despliega al elegir un municipio
+function toggleMapSheet(open){
+  var sb=document.querySelector('.map-sidebar'), bt=document.getElementById('mapSheetToggle');
+  if(!sb||!bt) return;
+  if(open===undefined) open=sb.classList.contains('collapsed');
+  sb.classList.toggle('collapsed',!open);
+  bt.setAttribute('aria-expanded',open?'true':'false');
+  bt.querySelector('span').textContent=open?'Ocultar panel':'Capas, búsqueda y leyenda';
+}
+
 function initMap(){
+  if(window.matchMedia('(max-width:767px)').matches) toggleMapSheet(false);
   _loadBaseStyle().then(_createMap);
 }
 
@@ -274,12 +304,16 @@ function _createMap(style){
 
     // Límites municipales (siempre visibles, desde GeoJSON inline)
     map.addLayer({id:'muni-outline',type:'line',source:'municipios',paint:{'line-color':'#333','line-width':0.8,'line-opacity':0.35}});
+    // Contorno provincial, por encima de la densidad
+    _addProvinciaLayer();
     // Fill invisible solo para capturar eventos de puntero
     map.addLayer({id:'muni-interact',type:'fill',source:'municipios',paint:{'fill-color':'#000','fill-opacity':0}});
     // Resaltado hover
-    map.addLayer({id:'muni-hover',type:'fill',source:'municipios',paint:{'fill-color':'#333','fill-opacity':0.07},filter:['==','NOMBRE','']});
+    map.addLayer({id:'muni-hover',type:'line',source:'municipios',paint:{'line-color':'#1a1a1a','line-width':1.4,'line-opacity':0.55},filter:['==','NOMBRE','']});
     // Resaltado selección
-    map.addLayer({id:'muni-selected',type:'fill',source:'municipios',paint:{'fill-color':'#1a1a1a','fill-opacity':0.15},filter:['==','NOMBRE','']});
+    // Selección: contorno grueso (borde blanco + tinta), sin relleno que tape la densidad
+    map.addLayer({id:'muni-selected-casing',type:'line',source:'municipios',layout:{'line-join':'round'},paint:{'line-color':'#ffffff','line-width':6,'line-opacity':0.9},filter:['==','NOMBRE','']});
+    map.addLayer({id:'muni-selected',type:'line',source:'municipios',layout:{'line-join':'round'},paint:{'line-color':'#1a1a1a','line-width':2.8},filter:['==','NOMBRE','']});
 
     // Handlers de hover y click
     map.on('mousemove','muni-interact',function(e){
@@ -342,9 +376,11 @@ function selectMun(name,featOrNull){
   if(cc) cc.style.display='flex';
 
   selectedMun=name;
+  if(window.matchMedia('(max-width:767px)').matches) toggleMapSheet(true);
 
   if(map){
     map.setFilter('muni-selected',['==','NOMBRE',name]);
+    map.setFilter('muni-selected-casing',['==','NOMBRE',name]);
     map.setFilter('muni-hover',['==','NOMBRE','']);
   }
 
