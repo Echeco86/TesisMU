@@ -2451,3 +2451,15 @@ document.addEventListener('DOMContentLoaded',function(){
     },150);
   });
 })();
+
+// ── Cómo citar ──
+function copyCita(id,btn){
+  var txt=(document.getElementById(id)||{}).textContent||'';
+  function done(ok){ btn.textContent=ok?'¡Copiada!':'Seleccioná y copiá'; setTimeout(function(){ btn.textContent='Copiar cita'; },2200); }
+  if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(txt).then(function(){done(true);},function(){done(false);}); return; }
+  try{ var t=document.createElement('textarea'); t.value=txt; t.style.position='fixed'; t.style.opacity='0'; document.body.appendChild(t); t.select(); var ok=document.execCommand('copy'); t.remove(); done(ok); }catch(e){ done(false); }
+}
+function irACitar(){
+  showSec('teorico',_navBtn('teorico'));
+  var el=document.getElementById('como-citar'); if(el) el.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+}

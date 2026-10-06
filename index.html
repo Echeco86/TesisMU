@@ -333,6 +333,11 @@ footer a:hover{color:var(--text)}
 .nota-cortes{font-family:'Inter',sans-serif;font-size:12px;line-height:1.6;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--text);border-radius:6px;padding:9px 13px}
 .nota-cortes strong{color:var(--text)}
 .nota-chart{font-family:'Inter',sans-serif;font-size:11px;line-height:1.55;color:var(--muted);margin-top:8px}
+.theory-block a{color:var(--text);text-decoration:underline;text-underline-offset:2px}
+.cita{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:10px}
+.cita p{margin:0!important;font-size:12px!important;line-height:1.65!important;flex:1;word-break:break-word}
+.cita-btn{flex:0 0 auto;min-width:0}
+.cita-l{font-family:'Space Mono',monospace!important;font-size:9px!important;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)!important;margin:10px 0 4px!important}
 .stat-highlight{display:inline-block;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px 9px;font-family:'Fraunces',serif;font-weight:700;font-size:14px;margin:0 3px}
 
 /* ── SPLASH ── */
@@ -1307,6 +1312,17 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
       </tbody>
     </table>
   </div>
+
+  <div class="theory-block" id="como-citar">
+    <h3>Cómo citar</h3>
+    <p class="cita-l">Tesis (APA 7)</p>
+    <div class="cita"><p id="citaTesis">Echecolanea, J. M. (2024). <em>Transformaciones territoriales: dinámicas poblacionales y urbanas en municipios y comunas de la provincia de Córdoba (1980–2022)</em> [Tesis de maestría, Universidad Nacional de Córdoba]. Repositorio Digital Universitario. http://hdl.handle.net/11086/560262</p><button class="ficha-btn cita-btn" onclick="copyCita('citaTesis',this)" aria-live="polite">Copiar cita</button></div>
+    <p class="cita-l">Este panel</p>
+    <div class="cita"><p id="citaPanel">Echecolanea, J. M. (2024). <em>Transformaciones Territoriales: panel de datos sobre expansión urbana en la provincia de Córdoba</em> [Sitio web]. https://expansionurbana.vercel.app/</p><button class="ficha-btn cita-btn" onclick="copyCita('citaPanel',this)" aria-live="polite">Copiar cita</button></div>
+    <!-- PLACEHOLDER: licencia a confirmar por el autor (CC BY 4.0 propuesta) -->
+    <p><strong>Licencia de los datos derivados</strong> (indicadores por localidad y capas de densidad): <a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener license">Creative Commons Atribución 4.0 (CC BY 4.0)</a>. Podés usarlos y adaptarlos citando la fuente.</p>
+    <p><strong>Fuentes:</strong> población, INDEC (censos 1980–2022, datos públicos); superficie construida, GHSL GHS-BUILT-S R2022A © Unión Europea, Joint Research Centre (CC BY 4.0); límites municipales, Dirección General de Estadística y Censos de Córdoba.</p>
+  </div>
 </section>
 
 <!-- CONCLUSIONES -->
@@ -1417,7 +1433,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
 <div id="fichaPrint" aria-hidden="true"></div>
 <footer>
   <div><strong>Mgtr. Lic. Juan Manuel Echecolanea</strong> &nbsp;·&nbsp; <span>Echecolaneajuan&#64;gmail.com</span></div>
-  <div style="display:flex;gap:10px;align-items:center"><span>Expansión Urbana · Córdoba · Censos 1980–2022 · GHSL 1980–2020</span></div>
+  <div style="display:flex;gap:10px;align-items:center"><span>Expansión Urbana · Córdoba · Censos 1980–2022 · GHSL 1980–2020</span> · <a href="#teorico" onclick="event.preventDefault();irACitar()">Cómo citar</a></div>
 </footer>
 
 <script src="assets/data.v1.js"></script>
@@ -1439,7 +1455,7 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
       "email": "echecolaneajuan@gmail.com",
       "affiliation": {
         "@type": "Organization",
-        "name": "Universidad Nacional de Córdoba — Maestría en Urbanismo"
+        "name": "Universidad Nacional de Córdoba — Facultad de Arquitectura, Urbanismo y Diseño (FAUDI)"
       }
     },
     "datePublished": "2024",
@@ -1453,32 +1469,131 @@ nav button.nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) transla
       }
     },
     "temporalCoverage": "1980/2022",
-    "keywords": ["expansión urbana", "Córdoba", "GHSL", "INDEC", "urbanismo", "Argentina", "municipios"],
-    "variableMeasured": ["superficie construida", "población", "densidad urbana", "núcleos urbanos"],
-    "distribution": {
-      "@type": "DataDownload",
-      "encodingFormat": "application/geo+json",
-      "contentUrl": "https://expansionurbana.vercel.app/2020_v2.geojson"
-    }
+    "keywords": [
+      "expansión urbana",
+      "Córdoba",
+      "GHSL",
+      "INDEC",
+      "urbanismo",
+      "Argentina",
+      "municipios"
+    ],
+    "variableMeasured": [
+      {
+        "@type": "PropertyValue",
+        "name": "Población",
+        "unitText": "habitantes"
+      },
+      {
+        "@type": "PropertyValue",
+        "name": "Superficie construida",
+        "unitText": "ha (1 píxel GHSL = 1 ha)"
+      },
+      {
+        "@type": "PropertyValue",
+        "name": "Densidad construida",
+        "unitText": "m² construidos por píxel (valor BU medio)"
+      },
+      {
+        "@type": "PropertyValue",
+        "name": "Núcleos de construcción",
+        "unitText": "cantidad"
+      }
+    ],
+    "distribution": [
+      {
+        "@type": "DataDownload",
+        "name": "Capa de densidad construida 1980",
+        "encodingFormat": "application/geo+json",
+        "contentUrl": "https://expansionurbana.vercel.app/1980_v2.geojson"
+      },
+      {
+        "@type": "DataDownload",
+        "name": "Capa de densidad construida 1990",
+        "encodingFormat": "application/geo+json",
+        "contentUrl": "https://expansionurbana.vercel.app/1990_v3.geojson"
+      },
+      {
+        "@type": "DataDownload",
+        "name": "Capa de densidad construida 2000",
+        "encodingFormat": "application/geo+json",
+        "contentUrl": "https://expansionurbana.vercel.app/2000_v2.geojson"
+      },
+      {
+        "@type": "DataDownload",
+        "name": "Capa de densidad construida 2010",
+        "encodingFormat": "application/geo+json",
+        "contentUrl": "https://expansionurbana.vercel.app/2010_v2.geojson"
+      },
+      {
+        "@type": "DataDownload",
+        "name": "Capa de densidad construida 2020",
+        "encodingFormat": "application/geo+json",
+        "contentUrl": "https://expansionurbana.vercel.app/2020_v2.geojson"
+      }
+    ],
+    "@id": "https://expansionurbana.vercel.app/#dataset",
+    "isAccessibleForFree": true,
+    "citation": "http://hdl.handle.net/11086/560262",
+    "isBasedOn": [
+      {
+        "@type": "Dataset",
+        "name": "Censos Nacionales de Población, Hogares y Vivienda 1980–2022",
+        "creator": {
+          "@type": "Organization",
+          "name": "INDEC"
+        }
+      },
+      {
+        "@type": "Dataset",
+        "name": "GHS-BUILT-S R2022A",
+        "creator": {
+          "@type": "Organization",
+          "name": "European Commission, Joint Research Centre"
+        },
+        "license": "https://creativecommons.org/licenses/by/4.0/"
+      }
+    ]
   },
   {
     "@context": "https://schema.org",
     "@type": "ScholarlyArticle",
+    "@id": "http://hdl.handle.net/11086/560262",
     "name": "Transformaciones territoriales: dinámicas poblacionales y urbanas en municipios y comunas de la provincia de Córdoba (1980–2022)",
+    "headline": "Transformaciones territoriales: dinámicas poblacionales y urbanas en municipios y comunas de la provincia de Córdoba (1980–2022)",
+    "genre": "Tesis de maestría (Maestría en Urbanismo)",
     "author": {
       "@type": "Person",
       "name": "Juan Manuel Echecolanea",
-      "email": "echecolaneajuan@gmail.com"
+      "email": "echecolaneajuan@gmail.com",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Universidad Nacional de Córdoba — Facultad de Arquitectura, Urbanismo y Diseño (FAUDI)"
+      }
     },
+    "contributor": [
+      {
+        "@type": "Person",
+        "name": "Leticia Gómez",
+        "roleName": "Directora"
+      },
+      {
+        "@type": "Person",
+        "name": "Laura Luna",
+        "roleName": "Codirectora"
+      }
+    ],
     "datePublished": "2024",
     "inLanguage": "es",
     "url": "http://hdl.handle.net/11086/560262",
+    "identifier": "http://hdl.handle.net/11086/560262",
     "publisher": {
       "@type": "Organization",
       "name": "Universidad Nacional de Córdoba"
     },
     "about": "Análisis espaciotemporal de la expansión urbana de 427 municipios y comunas de la provincia de Córdoba, Argentina, entre 1980 y 2022.",
-    "keywords": "expansión urbana, urbanismo, Córdoba, Argentina, GHSL, INDEC"
+    "keywords": "expansión urbana, urbanismo, Córdoba, Argentina, GHSL, INDEC",
+    "isAccessibleForFree": true
   }
 ]
 </script>
