@@ -133,3 +133,17 @@ Primero se sube `assets/app.v1.js` a `app.v2.js`, porque la v1 ya está en produ
 
 - **Mayores ahorros de la primera carga**: la portada pasa de 409 KiB a 0 en móvil (64 KiB en escritorio), la foto del autor de 407 KiB a 0 (carga diferida) y el HTML de 183 KiB a 28 KiB (más `data` 138 KiB + `app` 43 KiB, cacheables por un año).
 - **Primera apertura del mapa** (capa 2020): de ~10 MB con gzip (34 MB sin comprimir) a **134 KB** con PMTiles.
+
+## Resolución de dudas de la Tanda 1 (rama `fix/dudas-tanda-1`)
+
+Los textos se ajustan a lo que dicen los datos; `DATA` no cambia.
+
+- **+154 %** (antes +155 %) de expansión urbana provincial en portada, intro y conclusión 1: `DATA.totals` da +154,49 %.
+- **Punto de inflexión (intro y conclusión 2)**: en 2000–2010 la superficie construida crece un 2,90 % anual, 2,5 veces el ritmo de la población (antes decía "casi duplicó"; en 1990–2000 la relación era 1,4). Se aclara que 2010–2020 es la década de mayor ritmo (4,05 % anual), en lugar de "el mayor salto" en 2000–2010.
+- **Valles Turísticos (intro y conclusión 3)**: caso extremo por el aumento absoluto, +49.562 ha y el 37 % de lo que sumó la provincia. En términos relativos los superan la Región Oeste (+580 %) y la Región Centro (+435 %).
+- **Conclusión 5**: los descensos de densidad citados son los de los datos (Oeste −19 %, Sureste −15 %, Ciudades +50.000 −11 %). Antes decía que bajaba la de Valles, que sube un 9 % (sigue entre las más bajas: 987 m² BU/píxel).
+- **Tarjeta "Expansión supera al crecimiento"**: 73 %, "en 313 de las 427 localidades" (antes 78 %, calculado sobre las 399 clasificables).
+- **LCRPGR**: el subtítulo del gráfico y el glosario aclaran t = 40 años (1980–2020) para superficie y población; la población usa el censo 2022.
+- **Nombres**: Miramar se muestra como "Miramar de Ansenuza" (enlace `#mapa/loc=miramar-de-ansenuza`). Se aprueban los casos especiales de `docs/equivalencias-nombres.csv`.
+- **README**: las 9 regiones de `DATA`, hosting en Vercel, stack actual (MapLibre, PMTiles, deck.gl), unidad de densidad y estructura del repositorio.
+- `assets/app.v2.js` pasa a `app.v3.js` (cambio de contenido con caché inmutable).
