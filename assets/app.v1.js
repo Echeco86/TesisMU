@@ -143,7 +143,10 @@ function featureBBox(feat){
 
 // Capas de densidad v2: propiedad única dens_cat con las clases de la leyenda
 // (Muy Baja · Baja · Media · Alta · Muy Alta), 5 decimales. Ver CHANGELOG (Tanda 2).
-function densLayerUrl(yr){ return yr+'_v2.geojson'; }
+function densLayerUrl(yr){ return yr+'_v2.geojson'; }           // usada por la vista 3D
+// Experimento PMTiles: teselas vectoriales por año (tippecanoe, capa "densidad"), por HTTP Range
+function densTilesUrl(yr){ return new URL('capas/'+yr+'_v1.pmtiles', location.href).href; }
+var USE_PMTILES = typeof pmtiles!=='undefined';
 
 // Expresión MapLibre: clase de densidad → color del año
 function _densColorExpr(yr){
@@ -192,17 +195,22 @@ async function _ensureYearLayer(yr){
   var loadTxt=document.getElementById('mapLoadText');
   if(loadMsg){if(loadTxt)loadTxt.textContent='Cargando capa '+yr+'...';loadMsg.style.display='block';}
   try{
-    var resp=await fetch(densLayerUrl(yr));
-    if(!resp.ok) throw new Error('HTTP '+resp.status);
-    var gj=await resp.json();
-    map.addSource('year-'+yr,{type:'geojson',data:gj});
-    map.addLayer({
+    if(USE_PMTILES){
+      map.addSource('year-'+yr,{type:'vector',url:'pmtiles://'+densTilesUrl(yr)});
+    } else {
+      var resp=await fetch(densLayerUrl(yr));
+      if(!resp.ok) throw new Error('HTTP '+resp.status);
+      map.addSource('year-'+yr,{type:'geojson',data:await resp.json()});
+    }
+    var lyr={
       id:layerId,
       type:'fill',
       source:'year-'+yr,
       layout:{visibility:layerActive[yr]?'visible':'none'},
       paint:{'fill-color':_densColorExpr(yr),'fill-opacity':layerOpacity[yr]}
-    },map.getLayer('provincia-limite')?'provincia-limite':'muni-outline');
+    };
+    if(USE_PMTILES) lyr['source-layer']='densidad';
+    map.addLayer(lyr,map.getLayer('provincia-limite')?'provincia-limite':'muni-outline');
     _loadingYrs[yr]=false;
     if(loadMsg)loadMsg.style.display='none';
   }catch(e){
@@ -285,6 +293,7 @@ function initMap(){
 }
 
 function _createMap(style){
+  if(USE_PMTILES && !_createMap._proto){ _createMap._proto=new pmtiles.Protocol(); maplibregl.addProtocol('pmtiles',_createMap._proto.tile); }
   map=new maplibregl.Map({
     container:'map',
     style:style,
