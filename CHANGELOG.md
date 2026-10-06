@@ -74,5 +74,7 @@ Ningún cambio modifica valores analíticos: `DATA` y `MUNICIPIOS_GJ` se verific
 - **`prefers-reduced-motion`**: sin animaciones CSS ni de Chart.js. Las tarjetas de la intro son visibles por defecto (antes podían quedar en blanco).
 - Tabla regional con la primera columna fija y aviso de scroll horizontal.
 
-### Evaluación aparte (rama `exp/pmtiles`)
-- Capas en PMTiles con tippecanoe y el protocolo `pmtiles` de MapLibre: la primera vista baja **134 KB** en lugar de ~3 MB con gzip. Detalle y recomendación en `docs/evaluacion-pmtiles.md`.
+### PMTiles (rama `exp/pmtiles`, mergeada)
+- El mapa 2D lee las capas de densidad desde `capas/{año}_v1.pmtiles` (tippecanoe, z5–z12) por HTTP Range: la primera vista baja **134 KB** en lugar de ~3 MB con gzip. Medición en `docs/evaluacion-pmtiles.md`.
+- Respaldo automático: si la librería no carga o las teselas fallan (servidor sin Range), se usan los GeoJSON v2. La vista 3D usa siempre GeoJSON.
+- Se eliminan `tiles/` (44 MB, 8.634 .pbf sin uso), `build-tiles.sh` y `README_MIGRACION.md`. Regeneración: `tools/build-capas.sh` + `tools/build-pmtiles.sh`.

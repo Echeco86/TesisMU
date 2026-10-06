@@ -182,6 +182,20 @@ function updateDensLegend(){
 
 // Carga el GeoJSON de un año y lo agrega como capa de fill en MapLibre.
 // En activaciones siguientes, solo muestra la capa ya cargada (cacheado).
+// Si las teselas PMTiles fallan (p. ej. el servidor no responde a pedidos Range),
+// se pasa una sola vez a los GeoJSON v2 y se recargan los años activos.
+function _pmtilesFallback(){
+  if(!USE_PMTILES) return;
+  USE_PMTILES=false;
+  console.warn('PMTiles no disponible; se usan las capas GeoJSON.');
+  YEARS.forEach(function(y){
+    if(map.getLayer('density-fill-'+y)) map.removeLayer('density-fill-'+y);
+    if(map.getSource('year-'+y)) map.removeSource('year-'+y);
+    _loadingYrs[y]=false;
+    if(layerActive[y]) _ensureYearLayer(y);
+  });
+}
+
 async function _ensureYearLayer(yr){
   if(!_mapLoaded){_pendingYrs.push(yr);return;}
   var layerId='density-fill-'+yr;
@@ -310,6 +324,7 @@ function _createMap(style){
   });
 
   map.addControl(new maplibregl.NavigationControl(),'bottom-right');
+  map.on('error',function(e){ if(USE_PMTILES && e && e.sourceId && /^year-/.test(e.sourceId)) _pmtilesFallback(); });
   map.addControl(new maplibregl.AttributionControl({compact:true}),'bottom-left');
 
   map.on('load',function(){

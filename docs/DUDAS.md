@@ -6,7 +6,7 @@ A. **La capa 1990 es una copia exacta de la de 1980.** `1990_Ligth.geojson` ten�
 B. **Contorno provincial**: hoy sale de la capa `boundary` (admin_level 4) del mapa base OpenFreeMap, así que en el modo de respaldo (sin mapa base) no aparece. Si me pasás el límite oficial (p. ej. de IDECOR) en GeoJSON, se carga con `PROVINCIA_URL` y se ve siempre.
 C. **Rampa de 2020**: con más contraste de luminosidad, los pasos oscuros del naranja tiran a ocre y marrón (mismo tono, más oscuro). ¿Lo dejamos así o preferís menos contraste y más naranja?
 D. **Paleta regional en scatters**: con 9 regiones no hay paleta que separe todos los pares a ΔE ≥ 15 en visión normal; el par más cercano es Ciudades +50.000 ↔ Valles Turísticos (ΔE 10,8). Lo compensan la leyenda que aísla regiones y el filtro de región. Si querés más separación, conviene agrupar regiones en los scatters.
-E. **PMTiles o GeoJSON**: recomiendo PMTiles (ver `docs/evaluacion-pmtiles.md`). Si estás de acuerdo, mergeo `exp/pmtiles` sobre `perf/tanda-2`.
+E. ~~**PMTiles o GeoJSON**~~: **resuelto**, PMTiles mergeado en `perf/tanda-2` con respaldo automático a GeoJSON. Falta confirmar en el preview que `capas/*.pmtiles` responde `206` (si no, el sitio usa GeoJSON solo).
 F. **Chart.js** se carga ahora desde unpkg en lugar de cdnjs, para poder verificar el SRI.
 
 ## De la Tanda 1
@@ -36,7 +36,7 @@ Ningún valor analítico se cambió. Estas son inconsistencias o decisiones que 
 
 ## Técnicas
 
-11. **`tiles/`**: excluido del deploy con `.vercelignore` (Tanda 2) y eliminado en la rama `exp/pmtiles`. Queda en git en `perf/tanda-2` hasta que decidas.
+11. ~~**`tiles/`**~~: **resuelto**, eliminado (Tanda 2, con el merge de PMTiles).
 12. **Clave de Google Drive** (`DRIVE_API_KEY`) visible en el JS público, para el botón "↓ mapa". Conviene restringirla por HTTP referrer (expansionurbana.vercel.app) en Google Cloud.
 13. ~~**Render de densidad en escritorio**~~: **resuelto en la Tanda 2.** El dibujo en triángulos venía de la geometría original (15 decimales), no del entorno; con las capas v2 se ve bien.
 14. **OpenFreeMap no se pudo probar en vivo** (la red del contenedor bloquea tiles.openfreemap.org y las CDN); las capturas muestran el respaldo crema. Verificalo en el preview de Vercel.
