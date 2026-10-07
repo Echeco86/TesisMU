@@ -1912,11 +1912,27 @@ function _svgProvincia(key){
   MUNICIPIOS_GJ.features.forEach(function(f){ var p=_svgPath(f.geometry,pr); if(f.properties.NOMBRE===key) sel=p; else d+=p; });
   return '<svg viewBox="0 0 150 190" class="fp-svg-prov"><path d="'+d+'" fill="#b9b4a6" stroke="none"/><path d="'+sel+'" fill="#d2323c" stroke="#d2323c" stroke-width="3"/></svg>';
 }
+// Una captura vacía (lienzo transparente o de un solo color) cuenta como fallida y se usa el SVG.
+function _canvasVacio(cv){
+  var c=document.createElement('canvas'); c.width=32; c.height=24;
+  var x=c.getContext('2d'); x.drawImage(cv,0,0,32,24);
+  var d=x.getImageData(0,0,32,24).data;
+  for(var i=4;i<d.length;i+=4){ if(d[i+3]>0&&(d[i]!==d[0]||d[i+1]!==d[1]||d[i+2]!==d[2])) return false; }
+  return true;
+}
 function _mapSnapshot(cb){
   if(!map||is3D){ cb(null); return; }
   var done=false, t=setTimeout(function(){ if(!done){ done=true; cb(null); } },1500);
-  map.once('render',function(){ if(done) return; done=true; clearTimeout(t); try{ cb(map.getCanvas().toDataURL('image/png')); }catch(e){ cb(null); } });
+  map.once('render',function(){ if(done) return; done=true; clearTimeout(t);
+    try{ var cv=map.getCanvas(); cb(_canvasVacio(cv)?null:cv.toDataURL('image/jpeg',0.9)); }catch(e){ cb(null); } });
   map.triggerRepaint();
+}
+// window.print() congela la página en el momento: hay que esperar a que la imagen del mapa esté decodificada.
+function _imgLista(img,cb){
+  var fin=false, go=function(){ if(!fin){ fin=true; cb(); } };
+  if(!img){ go(); return; }
+  setTimeout(go,3000);
+  if(img.decode) img.decode().then(go,go); else { img.onload=img.onerror=go; if(img.complete) go(); }
 }
 function printFicha(key){
   key=key||selectedMun; var ld=DATA.localities[key]; if(!ld) return;
@@ -1951,7 +1967,7 @@ function printFicha(key){
         'Echecolanea, J. M. Transformaciones territoriales (Tesis de Maestría en Urbanismo, FAUDI-UNC). http://hdl.handle.net/11086/560262 · '+
         url+' · '+fecha+'</footer>';
     document.body.classList.add('print-ficha');
-    window.print();
+    _imgLista(document.querySelector('#fichaPrint .fp-img'),function(){ window.print(); });
   });
 }
 window.addEventListener('afterprint',function(){ document.body.classList.remove('print-ficha'); });
