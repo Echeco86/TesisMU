@@ -147,3 +147,10 @@ Los textos se ajustan a lo que dicen los datos; `DATA` no cambia.
 - **Nombres**: Miramar se muestra como "Miramar de Ansenuza" (enlace `#mapa/loc=miramar-de-ansenuza`). Se aprueban los casos especiales de `docs/equivalencias-nombres.csv`.
 - **README**: las 9 regiones de `DATA`, hosting en Vercel, stack actual (MapLibre, PMTiles, deck.gl), unidad de densidad y estructura del repositorio.
 - `assets/app.v2.js` pasa a `app.v3.js` (cambio de contenido con caché inmutable).
+
+## Ficha imprimible sin mapa (rama `fix/ficha-mapa`)
+
+- **La ficha salía sin mapa al imprimir o guardar como PDF**: `window.print()` se llamaba apenas se insertaba la captura del mapa, antes de que el navegador la decodificara, y la impresión quedaba con la imagen vacía. Ahora espera a que la imagen esté lista (máximo 3 s).
+- Si la captura del mapa sale vacía (lienzo transparente o de un solo color), la ficha usa el contorno del municipio en SVG en lugar de un recuadro en blanco.
+- La captura se guarda en JPEG en lugar de PNG: pesa menos de la mitad y se decodifica más rápido.
+- `assets/app.v3.js` pasa a `app.v4.js`.
